@@ -1,0 +1,33 @@
+---
+config:
+  theme: default
+---
+sequenceDiagram
+    actor Клиент
+    participant GW as API Gateway
+    participant A as FastAPI A
+    participant B as FastAPI B
+    participant N as NATS JetStream
+    participant W as Воркер
+
+
+    Клиент->>GW: отправка видео
+    GW->>A: проксирует соединение
+    Note over A: ws_connections["abc123"] = socket
+
+    GW->>A: передаёт запрос
+    A->>N: publish(decode.task, {task_id: "abc123"})
+
+    W->>N: subscribe(decode.task)
+    N->>W: {task_id: "abc123"}
+    Note over W: декодируем видео...
+    W->>N: publish(ws.notify.abc123, {state: done})
+
+    N->>A: ws.notify.abc123
+    N->>B: ws.notify.abc123
+    
+    Note over B: ws_connections["abc123"]<br/>не найдено соединение, игнорируем
+    Note over A: ws_connections["abc123"]<br/>найдено соединение, push
+    A->>Клиент: уведомление о конце задачи
+    Note over A: соединение закрыто
+    
