@@ -1,0 +1,14 @@
+prefix=/mnt/w/desktop/учеба/диплом/code/FFFMPEG/wasm-build
+exec_prefix=${prefix}
+libdir=/mnt/w/desktop/учеба/диплом/code/FFFMPEG/wasm-build/lib
+includedir=/mnt/w/desktop/учеба/диплом/code/FFFMPEG/wasm-build/include
+
+Name: libavcodec
+Description: FFmpeg codec library
+Version: 61.25.102
+Requires: libavutil >= 59.47.100
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavcodec -lm
+Libs.private: 
+Cflags: -I${includedir}

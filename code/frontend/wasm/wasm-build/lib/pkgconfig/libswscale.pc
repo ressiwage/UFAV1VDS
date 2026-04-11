@@ -1,0 +1,14 @@
+prefix=/mnt/w/desktop/учеба/диплом/code/FFFMPEG/wasm-build
+exec_prefix=${prefix}
+libdir=/mnt/w/desktop/учеба/диплом/code/FFFMPEG/wasm-build/lib
+includedir=/mnt/w/desktop/учеба/диплом/code/FFFMPEG/wasm-build/include
+
+Name: libswscale
+Description: FFmpeg image rescaling library
+Version: 8.9.101
+Requires: libavutil >= 59.47.100
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lswscale -lm
+Libs.private: 
+Cflags: -I${includedir}

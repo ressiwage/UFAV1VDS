@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WASM File Processor</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
+    input, button { margin: 10px 0; display: block; }
+    button { padding: 8px 16px; cursor: pointer; }
+    #status { margin-top: 20px; white-space: pre-wrap; color: #333; }
+    #status.error { color: red; }
+  </style>
+</head>
+<body>
+  <h2>WASM File Processor</h2>
+  <input type="file" id="fileInput" accept=".mp4">
+  <button onclick="runWasm()">Process</button>
+  <div id="status">Waiting for module...</div>
+
+  <script>
+    // Должно быть ДО подключения output.js
+    var Module = {
+      locateFile: (path) => {
+        if (path.endsWith('.wasm')) {
+          return 'http://localhost:3000/code/frontend/wasm/output.wasm'; // рядом с output.js, не на localhost:3000
+        }
+        return path;
+      },
+      onRuntimeInitialized: () => {
+        moduleReady = true;
+        document.getElementById('status').textContent = 'Module ready. Select a file and click Process.';
+      }
+    };
+  </script>
+  <script src="../wasm/output.js"></script>
+
+  <script>
+    let moduleReady = false;
+
+    async function runWasm() {
+      const status = document.getElementById('status');
+
+      if (!moduleReady) {
+        status.textContent = 'Module not ready yet.';
+        return;
+      }
+
+      const file = document.getElementById('fileInput').files[0];
+      if (!file) {
+        status.textContent = 'Please select a file first.';
+        return;
+      }
+
+      status.className = '';
+      status.textContent = 'Reading file...';
+
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const inputData = new Uint8Array(arrayBuffer);
+
+        Module.FS.writeFile('/input.mp4', inputData);
+        status.textContent = 'Running WASM...';
+
+        Module['callMain'](['/input.mp4']); // путь должен совпадать с тем что в C-коде
+
+        const outputData = Module.FS.readFile('/packets.obu');
+        status.textContent = 'Done! Downloading output...';
+
+        const blob = new Blob([outputData], { type: 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'packets.obu';
+        a.click();
+        URL.revokeObjectURL(url);
+
+        status.textContent = 'File processed and downloaded successfully.';
+      } catch (err) {
+        status.className = 'error';
+        status.textContent = 'Error: ' + err.message;
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>

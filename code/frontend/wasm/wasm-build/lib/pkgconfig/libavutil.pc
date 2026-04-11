@@ -1,0 +1,14 @@
+prefix=/mnt/w/desktop/учеба/диплом/code/FFFMPEG/wasm-build
+exec_prefix=${prefix}
+libdir=/mnt/w/desktop/учеба/диплом/code/FFFMPEG/wasm-build/lib
+includedir=/mnt/w/desktop/учеба/диплом/code/FFFMPEG/wasm-build/include
+
+Name: libavutil
+Description: FFmpeg utility library
+Version: 59.47.100
+Requires: 
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavutil -lm
+Libs.private: 
+Cflags: -I${includedir}
