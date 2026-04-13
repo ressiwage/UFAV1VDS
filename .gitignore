@@ -1,0 +1,7 @@
+comexp/
+code/FFFMPEG/
+code/emsdk/
+.vscode/
+*.obu
+*.mkv
+code/test/*
