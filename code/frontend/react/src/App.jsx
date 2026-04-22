@@ -115,9 +115,11 @@ const AuthPanel = ({ onLogin }) => {
       <Input label="Username" value={username} onChange={e => setUsername(e.target.value)} autoComplete="username" />
       <Input label="Password" type="password" value={password} onChange={e => setPassword(e.target.value)}
         onKeyDown={e => e.key === "Enter" && submit()} />
-      <Btn loading={loading} onClick={submit} style={{ marginBottom: 10 }}>
+      <div style={{marginBottom:'10px'}}>
+      <Btn variant="ghost" loading={loading} onClick={submit} >
         {mode === "login" ? "Sign in" : "Register"}
       </Btn>
+      </div>
       <Btn variant="ghost" onClick={() => { setMode(mode === "login" ? "register" : "login"); setNotice({ msg: "", type: "" }); }}>
         {mode === "login" ? "No account? Register" : "Have an account? Sign in"}
       </Btn>

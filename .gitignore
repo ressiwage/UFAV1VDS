@@ -5,3 +5,4 @@ code/emsdk/
 *.obu
 *.mkv
 code/test/*
+WSL2-Linux-Kernel/*

@@ -196,22 +196,22 @@ play_final() {
         movie='${ORIG_CLIP}',   setpts=PTS-STARTPTS [A];
         movie='${DECODED_CLIP}',setpts=PTS-STARTPTS [B];
 
-        [A] split=3 [A1][A2][A3];
+        [A] split=2 [A1][A2];
         [B] split=2 [B1][B2];
 
         [A1][B1] blend=all_mode=subtract,
                  format=yuv420p,
-                 lutyuv=y='val':u=128:v=128
-                 [luma_diff];
+                 lutyuv=y='val*25':u=128:v=128
+                 [luma_mask];
 
-        [luma_diff] lutrgb=r='val':
-                           g='0':
-                           b='val'
-                 [fuchsia_layer];
-                 
-        [A2][fuchsia_layer] overlay=format=auto [with_fuchsia];
+[luma_mask] lutrgb=
+    r='val':
+    g='0':
+    b='val'
+    [with_fuchsia];
 
-        [A3][B2] hstack=inputs=2 [top_row];
+
+        [A2][B2] hstack=inputs=2 [top_row];
 
         [with_fuchsia] pad=iw*2:ih:(ow-iw)/2:0:black [bottom_row];
 
@@ -221,6 +221,37 @@ play_final() {
     -loglevel warning
 }
 
+play_final_pt() {
+    info "Запускаю наглядный diff-просмотр..."
+    info "  Левый:  оригинал"
+    info "  Центр:  декодированное"
+    info "  Правый: diff heatmap"
+
+    ffmpeg -hide_banner -loglevel warning \
+        -i "$ORIG_CLIP" \
+        -i "$DECODED_CLIP" \
+        -filter_complex "
+            [0:v]setpts=PTS-STARTPTS[O0];
+            [1:v]setpts=PTS-STARTPTS[D0];
+
+            [O:v] split=2 [O][O1];
+
+            [D0][O0]scale2ref[dec][O];
+            
+            [O][dec]blend=all_mode=difference,format=gray,
+                       lut=y='val*12',
+                       pseudocolor=preset=heat[diff];
+
+            [O][dec]hstack=inputs=2[top];
+            [O][diff]hstack=inputs=2[bottom];
+            [top][bottom]vstack=inputs=2[out]
+        " \
+        -map "[out]" -f nut - | \
+    ffplay -hide_banner -loglevel warning \
+        -window_title "Oinal | decoded | diff heatmap" \
+        -i -
+}
+
 # ---------------------------------------------------------------------------
 # Точка входа
 # ---------------------------------------------------------------------------
@@ -228,8 +259,12 @@ main() {
     check_deps
     decode_obu
     trim_clips
+    # play_final
+
     play_final
     
 }
 
+
+   
 main "$@"

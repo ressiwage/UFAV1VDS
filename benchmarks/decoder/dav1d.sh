@@ -1,7 +1,6 @@
 
 
-cat code/tvav.obu > /dev/null
-
+cat code/tvav.obu > /dev/null && \
 hyperfine \
   --warmup 1 \
   --runs 3 \

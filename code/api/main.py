@@ -3,16 +3,21 @@ from fastapi.responses import HTMLResponse, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 import mysql.connector
-import hashlib
+import hashlib, asyncio
 import secrets
 import subprocess
 import tempfile
 import os
+from reporter.reporter import report_loop
 from contextlib import asynccontextmanager
+
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()   # создаёт таблицу users если её нет
+    asyncio.create_task(report_loop())
+
     yield
 
 app = FastAPI(lifespan=lifespan)
@@ -88,6 +93,7 @@ def get_current_user(
 
 
 # ─── Routes ────────────────────────────────────────────────────────────────────
+
 
 @app.post("/register")
 def register(user: UserRegister, conn=Depends(get_db)):

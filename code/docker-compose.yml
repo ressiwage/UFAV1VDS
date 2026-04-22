@@ -1,14 +1,16 @@
 services:
   db:
-    image: mysql:8.4
+    image: mysql:8.0.42
+    command: --port=3307
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: appdb
       MYSQL_USER: appuser
       MYSQL_PASSWORD: apppassword
+      MYSQL_PORT: 3307
     ports:
-      - "3306:3306"
+      - "3307:3307"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "appuser", "-papppassword"]
       interval: 5s
@@ -16,20 +18,35 @@ services:
       retries: 10
 
   api:
-    build: backend/
-    restart: always
+    build: api/
+    restart: no
     ports:
       - "8000:8000"
     environment:
+      PYTHONUNBUFFERED: 1
       MYSQL_HOST: db
-      MYSQL_PORT: 3306
+      MYSQL_PORT: 3307
       MYSQL_USER: appuser
       MYSQL_PASSWORD: apppassword
       MYSQL_DATABASE: appdb
+      GATEWAY_WS_URL: ws://gateway:7995/ws/replica
+      REPLICA_ID: hueputalo
+      PUBLIC_URL: localhost:8000
     depends_on:
+      gateway:
+        condition: service_started
       db:
         condition: service_healthy
+         
 
+  gateway:
+    build: gateway/
+    restart: no
+    ports:
+      - "7995:7995"
+    environment:
+      PYTHONUNBUFFERED: 1
+      FOO: BAR
 
 
   frontend:
