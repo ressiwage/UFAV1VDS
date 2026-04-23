@@ -1,0 +1,2 @@
+CPU_THRESHOLD = 0.9
+RAM_THRESHOLD = 1*(1024**3) #gb in bytes

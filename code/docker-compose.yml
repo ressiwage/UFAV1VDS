@@ -1,45 +1,61 @@
+x-common-env: &common-env
+  environment:
+    PYTHONUNBUFFERED: ${PYTHONUNBUFFERED:-1}
+    MYSQL_HOST: ${MYSQL_HOST}
+    MYSQL_PORT: ${MYSQL_PORT:-3307}
+    MYSQL_USER: ${MYSQL_USER}
+    MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    MYSQL_DATABASE: ${MYSQL_DATABASE}
+    MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    QUEUEING_ROUTE: ${QUEUEING_ROUTE}
+    COMMON_API: ${COMMON_API}
+
 services:
   db:
+    <<: *common-env
     image: mysql:8.0.42
-    command: --port=3307
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: appdb
-      MYSQL_USER: appuser
-      MYSQL_PASSWORD: apppassword
-      MYSQL_PORT: 3307
+    command: --port=${MYSQL_PORT:-3307}
+    restart: always      
     ports:
-      - "3307:3307"
+      - "${MYSQL_PORT:-3307}:${MYSQL_PORT:-3307}"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "appuser", "-papppassword"]
       interval: 5s
       timeout: 5s
       retries: 10
 
-  api:
-    build: api/
+  common-api:
+    <<: *common-env
+    build: common-api/
     restart: no
     ports:
       - "8000:8000"
     environment:
-      PYTHONUNBUFFERED: 1
-      MYSQL_HOST: db
-      MYSQL_PORT: 3307
-      MYSQL_USER: appuser
-      MYSQL_PASSWORD: apppassword
-      MYSQL_DATABASE: appdb
-      GATEWAY_WS_URL: ws://gateway:7995/ws/replica
-      REPLICA_ID: hueputalo
       PUBLIC_URL: localhost:8000
     depends_on:
       gateway:
         condition: service_started
       db:
         condition: service_healthy
-         
+  
+  decoder-api:
+    <<: *common-env
+    build: decoder-api/
+    restart: no
+    ports:
+      - "7948:7948"      
+    environment:
+      GATEWAY_WS_URL: ws://gateway:7948/ws/replica
+      REPLICA_ID: hueputalo
+      PUBLIC_URL: localhost:7948
+    depends_on:
+      gateway:
+        condition: service_started
+      db:
+        condition: service_healthy
 
   gateway:
+    <<: *common-env
     build: gateway/
     restart: no
     ports:
@@ -50,6 +66,7 @@ services:
 
 
   frontend:
+    <<: *common-env
     build: frontend/react/
     restart: always
     ports:
