@@ -1,4 +1,4 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, Form, File, Request, Response
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, Form, File, Request, Response, Query
 from fastapi.responses import JSONResponse, RedirectResponse
 from logic import server_rank_key
 import asyncio, json, time, httpx, os
@@ -19,7 +19,6 @@ async def replica_ws(ws: WebSocket):
     try:
         async for raw in ws.iter_text():
             msg = json.loads(raw)
-
             if msg["type"] == "register":
                 replica_id = msg["id"]
                 replicas[replica_id] = {
@@ -39,12 +38,29 @@ async def replica_ws(ws: WebSocket):
 
 STALE_TIMEOUT = 10  # секунд без heartbeat — реплика считается мёртвой
 
-@app.post("/upload")
+@app.post("/upload",openapi_extra={
+        "requestBody": {
+            "content": {
+                "multipart/form-data": {
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "file": {
+                                "type": "string",
+                                "format": "binary",
+                            }
+                        },
+                        "required": ["file"],
+                    }
+                }
+            }
+        }
+    },)
 async def upload_target(
-    file: UploadFile = File(...),
-    neccessary_ram: int = Form(...) # в байтах
+    request: Request,
+    neccessary_ram: int = Query(...),
+    
 ):
-    '''проксирование запросов на декодирование на реплики'''
     now = time.time()
     alive = {
         rid: data for rid, data in replicas.items()
@@ -52,18 +68,38 @@ async def upload_target(
     }
     if not alive:
         return JSONResponse({"error": "no replicas available"}, status_code=503)
-    print(alive)
-    ranked = sorted(list(replicas.values()), key=server_rank_key)
+
+    ranked = sorted(list(alive.values()), key=server_rank_key)
+
+    target_url = None
     for i in ranked:
-        if i['ram'] >= neccessary_ram:
-            return RedirectResponse(
-                url=f"{i['url']}/process",
-                status_code=307 
-            )
-    
-    return RedirectResponse(
-        url=FALLBACK_QUEUE,
-        status_code=307 
+        if i["ram"] >= neccessary_ram:
+            target_url = f"{i['url']}/upload"
+            break
+
+    if target_url is None:
+        target_url = f"{FALLBACK_QUEUE}/upload"
+
+    headers = {
+        key: value for key, value in request.headers.items()
+        if key.lower() in ("content-type", "content-length")
+    }
+
+    async def body_stream():
+        async for chunk in request.stream():
+            yield chunk
+
+    async with httpx.AsyncClient(timeout=None) as client:
+        resp = await client.post(
+            target_url,
+            content=body_stream(),
+            headers=headers,
+        )
+
+    return Response(
+        content=resp.content,
+        status_code=resp.status_code,
+        media_type=resp.headers.get("content-type"),
     )
 
 

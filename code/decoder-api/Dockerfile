@@ -3,26 +3,26 @@
 # ──────────────────────────────────────────────
 FROM debian:bookworm-slim AS ffmpeg-builder
 
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
     nasm \
     yasm \
     git \
+    meson \
     pkg-config \
     ca-certificates \
+    ninja-build \
     curl \
+    python3 \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
+
 # libaom (AV1 codec)
-RUN git clone --depth 1 https://aomedia.googlesource.com/aom /src/aom && \
-    cmake -S /src/aom -B /src/aom/build \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/usr/local \
-        -DENABLE_TESTS=OFF \
-        -DENABLE_DOCS=OFF && \
-    cmake --build /src/aom/build -j$(nproc) && \
-    cmake --install /src/aom/build
+RUN git clone https://github.com/ressiwage/DAV2D.git /src/dav1d && \
+    cd /src/dav1d && meson setup build -Denable_asm=false --buildtype=release && cd build && ninja  && ninja install
 
 # ffmpeg с поддержкой libaom
 RUN curl -fsSL https://ffmpeg.org/releases/ffmpeg-7.1.tar.bz2 | tar -xj -C /src && \
@@ -42,8 +42,8 @@ RUN curl -fsSL https://ffmpeg.org/releases/ffmpeg-7.1.tar.bz2 | tar -xj -C /src 
         --enable-demuxer=ivf \
         --enable-demuxer=mov \
         --enable-demuxer=matroska \
-        --enable-libaom \
-        --enable-decoder=libaom_av1 \
+        --enable-libdav1d \
+        --enable-decoder=libdav1d \
         --enable-muxer=image2 \
         --enable-encoder=mjpeg \
         --enable-filter=thumbnail \
@@ -53,6 +53,7 @@ RUN curl -fsSL https://ffmpeg.org/releases/ffmpeg-7.1.tar.bz2 | tar -xj -C /src 
         --extra-ldflags="-L/usr/local/lib" && \
     make -j$(nproc) && \
     make install
+
 
 # ──────────────────────────────────────────────
 # Stage 2: финальный образ

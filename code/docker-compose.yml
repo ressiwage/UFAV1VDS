@@ -1,25 +1,68 @@
 x-common-env: &common-env
+  env_file: .env   # добавить эту строку
   environment:
     PYTHONUNBUFFERED: ${PYTHONUNBUFFERED:-1}
-    MYSQL_HOST: ${MYSQL_HOST}
-    MYSQL_PORT: ${MYSQL_PORT:-3307}
-    MYSQL_USER: ${MYSQL_USER}
-    MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    MYSQL_DATABASE: ${MYSQL_DATABASE}
-    MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-    QUEUEING_ROUTE: ${QUEUEING_ROUTE}
-    COMMON_API: ${COMMON_API}
+    POSTGRES_HOST: ${POSTGRES_HOST:-db}
+    POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+    POSTGRES_USER: ${POSTGRES_USER:-appuser}
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-apppassword}
+    POSTGRES_DB: ${POSTGRES_DB:-appdb}
+    QUEUEING_ROUTE: ${QUEUEING_ROUTE:-}
+    COMMON_API: ${COMMON_API:-}
+    REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+    ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-900}
+    NATS_URL: ${NATS_URL:-nats://nats:4222}
 
 services:
   db:
-    <<: *common-env
-    image: mysql:8.0.42
-    command: --port=${MYSQL_PORT:-3307}
-    restart: always      
+    image: postgres:16-alpine
+    restart: always
     ports:
-      - "${MYSQL_PORT:-3307}:${MYSQL_PORT:-3307}"
+      - "${POSTGRES_PORT:-3307}:3307"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-appuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-apppassword}
+      POSTGRES_DB: ${POSTGRES_DB:-appdb}
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "appuser", "-papppassword"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-appuser} -d ${POSTGRES_DB:-appdb}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7.2-alpine
+    restart: always
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    # Пароль передаём только если REDIS_PASSWORD задан в .env,
+    # иначе запускаемся без аутентификации
+    command: >
+      sh -c '
+        if [ -n "$$REDIS_PASSWORD" ]; then
+          redis-server --requirepass "$$REDIS_PASSWORD"
+        else
+          redis-server
+        fi
+      '
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  nats:
+    image: nats:2.10-alpine
+    restart: always
+    ports:
+      - "${NATS_CLIENT_PORT:-4222}:4222"
+      - "${NATS_MONITOR_PORT:-8222}:8222"
+    command: ["--js", "-m", "8222", "--store_dir", "/data"]
+    volumes:
+      - nats_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8222/healthz"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -31,23 +74,25 @@ services:
     ports:
       - "8000:8000"
     environment:
-      PUBLIC_URL: localhost:8000
+      PUBLIC_URL: ${PUBLIC_URL:-localhost:8000}
     depends_on:
-      gateway:
-        condition: service_started
       db:
         condition: service_healthy
-  
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+
   decoder-api:
     <<: *common-env
     build: decoder-api/
     restart: no
     ports:
-      - "7948:7948"      
+      - "7948:7948"
     environment:
-      GATEWAY_WS_URL: ws://gateway:7948/ws/replica
-      REPLICA_ID: hueputalo
-      PUBLIC_URL: localhost:7948
+      GATEWAY_WS_URL: ws://gateway:7995/ws/replica
+      REPLICA_ID: ${REPLICA_ID:-replica-1}
+      PUBLIC_URL: ${DECODER_PUBLIC_URL:-http://192.168.64.103:7948}
     depends_on:
       gateway:
         condition: service_started
@@ -64,10 +109,12 @@ services:
       PYTHONUNBUFFERED: 1
       FOO: BAR
 
-
   frontend:
     <<: *common-env
     build: frontend/react/
     restart: always
     ports:
       - "4173:4173"
+
+volumes:
+  nats_data:

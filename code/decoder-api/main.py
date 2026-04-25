@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, File, UploadFile
+from fastapi import FastAPI, Depends, HTTPException, File, UploadFile, Query
 from fastapi.responses import HTMLResponse, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
@@ -10,12 +10,14 @@ import tempfile
 import os
 from reporter.reporter import report_loop
 from contextlib import asynccontextmanager
-
+from _common.db.relational import engine, SessionLocal, get_db
+from _common.db.redis import redis_client, REDIS_URL
+from _common.db.nats import js_connect
+from _common.models.models import UserLogin, UserRegister
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()   # создаёт таблицу users если её нет
     asyncio.create_task(report_loop())
 
     yield
@@ -25,51 +27,6 @@ security = HTTPBearer()
 
 # ─── MySQL connection ───────────────────────────────────────────────────────────
 
-def get_db():
-    conn = mysql.connector.connect(
-        host=os.getenv("MYSQL_HOST", "db"),
-        port=int(os.getenv("MYSQL_PORT", 3306)),
-        user=os.getenv("MYSQL_USER", "appuser"),
-        password=os.getenv("MYSQL_PASSWORD", "apppassword"),
-        database=os.getenv("MYSQL_DATABASE", "appdb"),
-    )
-    try:
-        yield conn
-    finally:
-        conn.close()
-
-
-def init_db():
-    conn = mysql.connector.connect(
-        host=os.getenv("MYSQL_HOST", "db"),
-        port=int(os.getenv("MYSQL_PORT", 3306)),
-        user=os.getenv("MYSQL_USER", "appuser"),
-        password=os.getenv("MYSQL_PASSWORD", "apppassword"),
-        database=os.getenv("MYSQL_DATABASE", "appdb"),
-    )
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id     INT AUTO_INCREMENT PRIMARY KEY,
-            username VARCHAR(255) UNIQUE NOT NULL,
-            password VARCHAR(64)  NOT NULL,
-            token    VARCHAR(255) UNIQUE
-        )
-    """)
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-
-# ─── Models ────────────────────────────────────────────────────────────────────
-
-class UserRegister(BaseModel):
-    username: str
-    password: str
-
-class UserLogin(BaseModel):
-    username: str
-    password: str
 
 
 # ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -140,7 +97,7 @@ def get_user(current_user: dict = Depends(get_current_user)):
 @app.post("/upload")
 async def upload_video(
     file: UploadFile = File(...),
-    current_user: dict = Depends(get_current_user),
+    # current_user: dict = Depends(get_current_user),
 ):
     """
     Принимает AV1-видео, декодирует через ffmpeg (libaom) и возвращает
@@ -160,9 +117,9 @@ async def upload_video(
         cmd = [
             "ffmpeg",
             "-y",
-            "-c:v", "libaom-av1",   # явно указываем декодер
+            "-c:v", "libdav1d",   # явно указываем декодер
             "-i", input_path,
-            "-sseof", "-0.1",        # перемотка к концу
+            "-sseof", "-10",        # перемотка к концу
             "-vframes", "1",         # один кадр
             "-q:v", "2",             # качество JPEG
             output_path,
@@ -174,7 +131,7 @@ async def upload_video(
             cmd_fallback = [
                 "ffmpeg",
                 "-y",
-                "-c:v", "libaom-av1",
+                "-c:v", "libdav1d",
                 "-i", input_path,
                 "-vf", "thumbnail",  # выбирает «лучший» кадр (часто последний)
                 "-vframes", "1",

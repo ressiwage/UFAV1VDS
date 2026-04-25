@@ -8,8 +8,11 @@ down:
 up-nc:
 	docker compose down; docker compose build --no-cache --pull && docker compose up --force-recreate
 
-up-nc-a:
-	docker compose up  --force-recreate --build api
+up-nc-da:
+	docker compose up  --force-recreate --build decoder-api
+
+up-nc-ca:
+	docker compose up  --force-recreate --build common-api
 
 up-nc-f:
 	docker compose up  --force-recreate --build frontend
