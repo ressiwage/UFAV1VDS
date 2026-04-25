@@ -72,9 +72,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=ffmpeg-builder /usr/local/bin/ffmpeg   /usr/local/bin/ffmpeg
 COPY --from=ffmpeg-builder /usr/local/lib           /usr/local/lib
 COPY --from=ffmpeg-builder /usr/local/include       /usr/local/include
+COPY --from=ffmpeg-builder /usr/local/bin/dav1d    /usr/local/bin/dav1d
+
 
 RUN ldconfig
-
+ENV DAV1D_PATH=/usr/local/bin/dav1d
 WORKDIR /app
 
 COPY requirements.txt .

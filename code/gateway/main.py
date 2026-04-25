@@ -1,16 +1,31 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, Form, File, Request, Response, Query
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, Form, File, Request, Response, Query, HTTPException, Header
 from fastapi.responses import JSONResponse, RedirectResponse
-from logic import server_rank_key
+from logic import server_rank_key, validate_bearer_via_common, issue_upload_otp
 import asyncio, json, time, httpx, os
+import redis.asyncio as aioredis
+from contextlib import asynccontextmanager
 
-app = FastAPI()
+redis_client: aioredis.Redis | None = None
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global redis_client
+    redis_client = aioredis.from_url(REDIS_URL, decode_responses=True)
+    yield
+    await redis_client.aclose()
+
+app = FastAPI(lifespan=lifespan)
+
+
 
 # Хранилище состояний реплик
 replicas: dict[str, dict] = {}
 # { "api-1": { "url": "http://api-1:8001", "cpu": 34.2, "last_seen": 1713800000 } }
-
+print(os.environ)
+REDIS_URL = os.environ["REDIS_URL"]
 FALLBACK_QUEUE = os.environ['QUEUEING_ROUTE']
 COMMON_SERV = os.environ['COMMON_API'] #auth, archives
+OTP_TTL = 60  # одноразовый токен живёт 60 секунд
+
 
 @app.websocket("/ws/replica")
 async def replica_ws(ws: WebSocket):
@@ -101,6 +116,42 @@ async def upload_target(
         status_code=resp.status_code,
         media_type=resp.headers.get("content-type"),
     )
+
+
+@app.get("/upload")
+async def upload_target(
+    neccessary_ram: int = Query(...),    
+    auth: str = Header(..., description="Bearer <access_token>"),
+):
+    now = time.time()
+    alive = {
+        rid: data for rid, data in replicas.items()
+        if now - data["last_seen"] < STALE_TIMEOUT
+    }
+    if not alive:
+        return JSONResponse({"error": "no replicas available"}, status_code=503)
+
+    ranked = sorted(list(alive.values()), key=server_rank_key)
+
+    target_url = None
+    for i in ranked:
+        if i["ram"] >= neccessary_ram:
+            target_url = f"{i['url']}/upload"
+            break
+
+    if target_url is None:
+        target_url = f"{FALLBACK_QUEUE}/upload"
+
+    if not auth.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authorization header required")
+
+    user = await validate_bearer_via_common(auth)
+
+    otp = await issue_upload_otp(redis_client, user["id"], neccessary_ram, OTP_TTL)
+
+
+    return {'url':f'{target_url}?token={otp}'}
+
 
 
 @app.api_route(

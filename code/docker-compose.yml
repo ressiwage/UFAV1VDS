@@ -1,6 +1,6 @@
 x-common-env: &common-env
   env_file: .env   # добавить эту строку
-  environment:
+  environment: &common-env-vars
     PYTHONUNBUFFERED: ${PYTHONUNBUFFERED:-1}
     POSTGRES_HOST: ${POSTGRES_HOST:-db}
     POSTGRES_PORT: ${POSTGRES_PORT:-5432}
@@ -74,6 +74,7 @@ services:
     ports:
       - "8000:8000"
     environment:
+      <<: *common-env-vars
       PUBLIC_URL: ${PUBLIC_URL:-localhost:8000}
     depends_on:
       db:
@@ -90,6 +91,7 @@ services:
     ports:
       - "7948:7948"
     environment:
+      <<: *common-env-vars
       GATEWAY_WS_URL: ws://gateway:7995/ws/replica
       REPLICA_ID: ${REPLICA_ID:-replica-1}
       PUBLIC_URL: ${DECODER_PUBLIC_URL:-http://192.168.64.103:7948}
@@ -106,6 +108,7 @@ services:
     ports:
       - "7995:7995"
     environment:
+      <<: *common-env-vars
       PYTHONUNBUFFERED: 1
       FOO: BAR
 

@@ -1,4 +1,11 @@
 from config import CPU_THRESHOLD, RAM_THRESHOLD
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, Form, File, Request, Response, Query, HTTPException
+from fastapi.responses import JSONResponse, RedirectResponse
+import asyncio, json, time, httpx, os, secrets
+import redis.asyncio as aioredis
+from contextlib import asynccontextmanager
+COMMON_SERV = os.environ['COMMON_API'] #auth, archives
+
 
 def server_rank_key(server):
     cpu = server['cpu']
@@ -10,3 +17,41 @@ def server_rank_key(server):
     
     return (cpu_score, ram_score, sid)
  
+
+async def validate_bearer_via_common(authorization: str) -> dict:
+    """
+    Проверяем access_token через /user на auth-сервисе.
+    Возвращает {"id": ..., "username": ...} или кидает 401.
+    """
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            f"{COMMON_SERV}/user",
+            headers={"Authorization": authorization},
+            timeout=5.0,
+        )
+    if resp.status_code != 200:
+        raise HTTPException(status_code=401, detail="Invalid or expired access token")
+    return resp.json()
+
+
+async def issue_upload_otp(redis_client, user_id: int, necessary_ram: int, OTP_TTL: int) -> str:
+    """
+    Генерирует одноразовый токен, кладёт в Redis с TTL.
+    Структура ключа: otp:upload:<token>
+    Значение: JSON {user_id, necessary_ram}
+    """
+    token = secrets.token_urlsafe(32)
+    payload = json.dumps({"user_id": user_id, "necessary_ram": necessary_ram})
+    await redis_client.setex(f"otp:upload:{token}", OTP_TTL, payload)
+    return token
+
+
+async def consume_upload_otp(redis_client, token: str) -> dict:
+    """
+    Атомарно читает и удаляет токен (GETDEL).
+    Возвращает payload или кидает 401.
+    """
+    raw = await redis_client.getdel(f"otp:upload:{token}")
+    if raw is None:
+        raise HTTPException(status_code=401, detail="Invalid or expired upload token")
+    return json.loads(raw)

@@ -9,14 +9,12 @@ async def report_loop():
     print("создаю хуйню")
     async with websockets.connect(GATEWAY_WS) as ws:
         # Регистрация
-        print("ркгистрирую хуйню")
         await ws.send(json.dumps({
             "type": "register",
             "id": REPLICA_ID,
             "url": PUBLIC_URL
         }))
         while True:
-            print("оотправляю хуйню")
             await ws.send(json.dumps({
                 "type": "heartbeat",
                 "id": REPLICA_ID,
