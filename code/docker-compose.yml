@@ -111,6 +111,9 @@ services:
       <<: *common-env-vars
       PYTHONUNBUFFERED: 1
       FOO: BAR
+    depends_on:
+      nats:
+        condition: service_started
 
   frontend:
     <<: *common-env

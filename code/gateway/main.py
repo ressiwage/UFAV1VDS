@@ -3,18 +3,75 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from logic import server_rank_key, validate_bearer_via_common, issue_upload_otp
 import asyncio, json, time, httpx, os
 import redis.asyncio as aioredis
+from nats.js import JetStreamContext
 from contextlib import asynccontextmanager
+from _common.db.nats import js_connect
+from nats.errors import TimeoutError as NTimeoutError
+from fastapi.middleware.cors import CORSMiddleware
+
 
 redis_client: aioredis.Redis | None = None
+js: JetStreamContext
+
+clients = {} # id:websocket
+async def broadcast_loop():
+    """Один цикл на всё приложение"""
+    global js
+    try:
+        await js.add_stream(name="NOTIFS", subjects=["notifications"])
+    except Exception:
+        pass
+    psub = await js.pull_subscribe('notifications')
+    try:
+        while True:
+            try:
+                msgs = await psub.fetch(batch=1, timeout=None)
+                msg = msgs[0]
+                await msg.ack()
+                print(msgs, msg, clients)
+            except NTimeoutError:
+                await asyncio.sleep(1)
+                continue
+
+            if clients:
+                dead = set()
+                client_ = clients.get(json.loads(msg.data.decode())['user_id']) or clients.get(str(json.loads(msg.data.decode())['user_id']))
+                if client_ is not None:
+                    payload = {
+                        "type": "update",
+                        "replicas": replicas,
+                        "ts": time.time()
+                    }
+                    result = await client_.send_json({**payload, **json.loads(msg.data.decode())})
+                    if isinstance(result, Exception):
+                        print(result)
+                        dead.add(json.loads(msg.data.decode())['user_id'])
+                
+                for i in clients:
+                    if i in dead:
+                        del clients[i]
+
+    finally:
+        await psub.unsubscribe()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global redis_client
+    global redis_client, js, nc 
+    js, nc = await js_connect()
     redis_client = aioredis.from_url(REDIS_URL, decode_responses=True)
+    asyncio.create_task(broadcast_loop())
     yield
     await redis_client.aclose()
 
 app = FastAPI(lifespan=lifespan)
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # или ["*"] для дев
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # Хранилище состояний реплик
@@ -51,6 +108,71 @@ async def replica_ws(ws: WebSocket):
             replicas.pop(replica_id, None)
 
 
+@app.websocket("/ws/client_notification")
+async def client_ws(ws: WebSocket, token: str = Query(...)):
+    global clients
+    print(clients, 'from ws')
+    await ws.accept()
+    print('accepted', 'from ws')
+    user = await validate_bearer_via_common(f'Bearer {token}')
+    if not user:
+        await ws.send_json({"type": "error", "detail": "Unauthorized"})
+        await ws.close(code=4001)
+        return
+
+    clients[user['id']] = ws
+    try:
+        while True:
+            await ws.receive_text()
+    except WebSocketDisconnect:
+        pass
+    finally:
+        if user['id'] in clients:
+            del clients[user['id']]
+
+
+'''
+^^^
+import { useEffect, useRef, useState } from "react";
+
+function useServerStream(token: string | null) {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState<string | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const ws = new WebSocket(
+      `wss://your-api.com/ws/client?token=${encodeURIComponent(token)}`
+    );
+    wsRef.current = ws;
+
+    ws.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      if (msg.type === "error") {
+        setError(msg.detail);
+        ws.close();
+      } else if (msg.type === "update") {
+        setData(msg);
+      }
+    };
+
+    ws.onerror = () => setError("Connection error");
+
+    ws.onclose = (event) => {
+      if (event.code === 4001) setError("Unauthorized");
+    };
+
+    return () => ws.close();
+  }, [token]);
+
+  return { data, error };
+}
+
+'''
+
+
 STALE_TIMEOUT = 10  # секунд без heartbeat — реплика считается мёртвой
 
 @app.post("/upload",openapi_extra={
@@ -71,7 +193,7 @@ STALE_TIMEOUT = 10  # секунд без heartbeat — реплика счит�
             }
         }
     },)
-async def upload_target(
+async def upload_target_old(
     request: Request,
     neccessary_ram: int = Query(...),
     

@@ -1,6 +1,44 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 
-const API = "";
+
+
+const API = "http://192.168.64.103:7995";
+const WS_API = "ws://192.168.64.103:7995";
+
+function useServerStream(token) {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+  const wsRef = useRef(null);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const ws = new WebSocket(
+      `${WS_API}/ws/client_notification?token=${encodeURIComponent(token)}`
+    );
+    wsRef.current = ws;
+
+    ws.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      if (msg.type === "error") {
+        setError(msg.detail);
+        ws.close();
+      } else if (msg.type === "update") {
+        setData(msg);
+      }
+    };
+
+    ws.onerror = () => setError("Connection error");
+
+    ws.onclose = (event) => {
+      if (event.code === 4001) setError("Unauthorized");
+    };
+
+    return () => ws.close();
+  }, [token]);
+
+  return { data, error };
+}
 
 const useAuth = () => {
   const [token, setToken] = useState(null);
@@ -23,7 +61,7 @@ const useAuth = () => {
       body: JSON.stringify({ username, password }),
     });
     if (!r.ok) throw new Error((await r.json()).detail);
-    const { token: t } = await r.json();
+    const { access_token: t, refresh_token: rt } = await r.json();
     setToken(t);
     const ur = await fetch(`${API}/user`, { headers: { Authorization: `Bearer ${t}` } });
     setUser(await ur.json());
@@ -86,6 +124,8 @@ const AuthPanel = ({ onLogin }) => {
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState({ msg: "", type: "" });
 
+
+
   const submit = async () => {
     if (!username || !password) return setNotice({ msg: "Fill all fields", type: "error" });
     setLoading(true); setNotice({ msg: "", type: "" });
@@ -134,16 +174,24 @@ const VideoPanel = ({ token, username, onLogout }) => {
   const [notice, setNotice] = useState({ msg: "", type: "" });
   const [videos, setVideos] = useState(null);
 
+    const { data: streamData, error: streamError } = useServerStream(token);
+
+
   const upload = async (file) => {
+    var neccessary_ram = 12345;
     setUploading(true); setFrame(null); setNotice({ msg: "", type: "" });
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const r = await fetch(`${API}/upload`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: fd,
-      });
+      const r = await fetch(`${API}/upload?neccessary_ram=${neccessary_ram}`, {
+        method: "get",
+        headers: { auth: `Bearer ${token}` },
+      }).then(resp=>resp.json()).then(
+        json=>fetch(json['url'], {
+          'method': 'post',
+          body: fd
+        })  
+      );
       if (!r.ok) { const d = await r.json(); throw new Error(d.detail); }
       const blob = await r.blob();
       setFrame(URL.createObjectURL(blob));
@@ -180,6 +228,15 @@ const VideoPanel = ({ token, username, onLogout }) => {
 
       <Notice {...notice} />
 
+
+      {streamError && <div>Stream error: {streamError}</div>}
+      {streamData && (
+        <div>
+          <div>Replicas: {JSON.stringify(streamData.replicas)}</div>
+        </div>
+      )}
+
+
       {/* Drop zone */}
       <div
         onDragOver={e => { e.preventDefault(); setDragging(true); }}
@@ -194,7 +251,7 @@ const VideoPanel = ({ token, username, onLogout }) => {
         }}
         onClick={() => document.getElementById("fileinput").click()}
       >
-        <input id="fileinput" type="file" accept="video/*,.av1,.ivf" style={{ display: "none" }}
+        <input id="fileinput" type="file" accept="video/*,.av1,.ivf,.obu" style={{ display: "none" }}
           onChange={e => e.target.files[0] && upload(e.target.files[0])} />
         {uploading ? (
           <div style={{ color: "#5a5aff", fontSize: 13 }}>

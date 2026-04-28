@@ -86,4 +86,4 @@ COPY . .
 
 EXPOSE 7948
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7948"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7948", "--log-level", "debug"]

@@ -15,9 +15,14 @@ from _common.db.relational import engine, SessionLocal, get_db
 from _common.db.redis import redis_client, REDIS_URL
 from _common.db.nats import js_connect
 from _common.models.models import UserLogin, UserRegister, Base
+from nats.js import JetStreamContext
+from fastapi.middleware.cors import CORSMiddleware
+
+
 
 DAV1D_PATH = os.environ.get('DAV1D_PATH', '')
 
+js: JetStreamContext
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -47,7 +52,13 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 security = HTTPBearer()
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # или ["*"] для дев
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -124,7 +135,7 @@ def get_user(current_user: dict = Depends(get_current_user)):
 
 
 @app.post("/upload_old")
-async def upload_video(
+async def upload_video_old(
     file: UploadFile = File(...),
     # current_user: dict = Depends(get_current_user),
 ):
@@ -183,62 +194,69 @@ async def upload_video(
 @app.post("/upload")
 async def upload_video(
     file: UploadFile = File(...),
-    upload_token: str = Query(..., description="Одноразовый токен из /upload/token"),
+    token: str = Query(..., description="Одноразовый токен из /upload/token"),
     # current_user: dict = Depends(get_current_user),
 ):
-    """
-    Принимает AV1-видео, декодирует через ffmpeg (libaom) и возвращает
-    последний кадр в виде JPEG.
-    """
-    payload = await consume_upload_otp(redis_client, upload_token)
-    necessary_ram = payload["necessary_ram"]
-    print(payload)
-    with tempfile.TemporaryDirectory() as tmpdir:
-        input_path = os.path.join(tmpdir, "input.av1")
-        output_path = os.path.join(tmpdir, "last_frame.jpg")
+    try:
+        """
+        Принимает AV1-видео, декодирует через ffmpeg (libaom) и возвращает
+        последний кадр в виде JPEG.
+        """
+        payload = await consume_upload_otp(redis_client, token)
+        necessary_ram = payload["necessary_ram"]
+        print(payload)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            input_path = os.path.join(tmpdir, "input.av1")
+            output_path = os.path.join(tmpdir, "last_frame.jpg")
 
-        # Сохраняем загруженный файл чанками
-        with open(input_path, "wb") as f:
-            while chunk := await file.read(8192):
-                f.write(chunk)
+            # Сохраняем загруженный файл чанками
+            with open(input_path, "wb") as f:
+                while chunk := await file.read(8192):
+                    f.write(chunk)
 
-        # ffmpeg: декодируем AV1 → извлекаем последний кадр
-        # -sseof -0.1  перематывает к концу файла, затем берём 1 кадр
-        cmd = [
-            "ffmpeg",
-            "-y",
-            "-c:v", "libdav1d",   # явно указываем декодер
-            "-i", input_path,
-            "-sseof", "-10",        # перемотка к концу
-            "-vframes", "1",         # один кадр
-            "-q:v", "2",             # качество JPEG
-            output_path,
-        ]
-        result = subprocess.run(cmd, capture_output=True)
-
-        if result.returncode != 0:
-            # Если -sseof не дал кадра (очень короткое видео), пробуем без него
-            cmd_fallback = [
+            # ffmpeg: декодируем AV1 → извлекаем последний кадр
+            # -sseof -0.1  перематывает к концу файла, затем берём 1 кадр
+            cmd = [
                 "ffmpeg",
                 "-y",
-                "-c:v", "libdav1d",
+                "-c:v", "libdav1d",   # явно указываем декодер
                 "-i", input_path,
-                "-vf", "thumbnail",  # выбирает «лучший» кадр (часто последний)
-                "-vframes", "1",
-                "-q:v", "2",
+                "-sseof", "-10",        # перемотка к концу
+                "-vframes", "1",         # один кадр
+                "-q:v", "2",             # качество JPEG
                 output_path,
             ]
-            result2 = subprocess.run(cmd_fallback, capture_output=True)
-            if result2.returncode != 0:
-                raise HTTPException(
-                    status_code=422,
-                    detail=f"FFmpeg failed: {result2.stderr.decode()}",
-                )
+            result = subprocess.run(cmd, capture_output=True)
 
-        with open(output_path, "rb") as f:
-            frame_bytes = f.read()
+            if result.returncode != 0:
+                # Если -sseof не дал кадра (очень короткое видео), пробуем без него
+                cmd_fallback = [
+                    "ffmpeg",
+                    "-y",
+                    "-c:v", "libdav1d",
+                    "-i", input_path,
+                    "-vf", "thumbnail",  # выбирает «лучший» кадр (часто последний)
+                    "-vframes", "1",
+                    "-q:v", "2",
+                    output_path,
+                ]
+                result2 = subprocess.run(cmd_fallback, capture_output=True)
+                if result2.returncode != 0:
+                    raise HTTPException(
+                        status_code=422,
+                        detail=f"FFmpeg failed: {result2.stderr.decode()}",
+                    )
 
-    return Response(content=frame_bytes, media_type="image/jpeg")
+            with open(output_path, "rb") as f:
+                frame_bytes = f.read()
+        try:
+            await js.add_stream(name="NOTIFS", subjects=["notifications"])
+        except Exception:
+            pass
+        await js.publish('notifications', payload = json.dumps({'user_id':payload['user_id'], 'payload':'123 test'}).encode())
+        return Response(content=frame_bytes, media_type="image/jpeg")
+    except Exception as e:
+        print(e)
 
 
 @app.get("/videos")

@@ -15,6 +15,9 @@ from _common.models.models import UserLogin, UserRegister, RefreshRequest, Base,
 from _common.db.relational import engine, SessionLocal, get_db
 from _common.db.redis import redis_client, REDIS_URL
 from _common.db.nats import js_connect
+from fastapi.middleware.cors import CORSMiddleware
+import random
+
 
 # ACCESS_TOKEN_TTL — время жизни access-токена в секундах (15 минут)
 ACCESS_TOKEN_TTL = int(os.getenv("ACCESS_TOKEN_TTL", 900))
@@ -59,7 +62,13 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 security = HTTPBearer()
 
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # или ["*"] для дев
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -92,21 +101,28 @@ async def get_current_user(
 
     # Прогреваем кэш для следующих запросов
     await redis_client.setex(f"access:{token}", ACCESS_TOKEN_TTL, user.id)
-    await redis_client.setex(f"user_id:{user.id}:username", ACCESS_TOKEN_TTL, user.username)
+    await redis_client.setex(f"user_id:{user.id}:username", ACCESS_TOKEN_TTL, user.name)
 
-    return {"id": user.id, "username": user.username}
+    return {"id": user.id, "username": user.name}
 
 
 # ─── Routes ───────────────────────────────────────────────────────────────────
 
 @app.post("/register")
 async def register(body: UserRegister, db: AsyncSession = Depends(get_db)):
-    user = User(username=body.username, password=hash_password(body.password))
+    user = User(
+        id = str(random.randint(10**35, 10**36-1)),
+        name=body.username, 
+        pwd_hash=hash_password(body.password),
+        n_mail = False, n_phone = False, n_TG = False,
+        cn_mail = False, cn_phone = False, cn_TG = False
+        )
     db.add(user)
     try:
         await db.commit()
-    except Exception:
+    except Exception as e:
         await db.rollback()
+        raise e
         raise HTTPException(status_code=400, detail="User already exists")
     return {"status": "ok"}
 
@@ -115,8 +131,8 @@ async def register(body: UserRegister, db: AsyncSession = Depends(get_db)):
 async def login(body: UserLogin, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(User).where(
-            User.username == body.username,
-            User.password == hash_password(body.password),
+            User.name == body.username,
+            User.pwd_hash == hash_password(body.password),
         )
     )
     user = result.scalar_one_or_none()
@@ -136,7 +152,7 @@ async def login(body: UserLogin, db: AsyncSession = Depends(get_db)):
 
     # Кэшируем новый access-токен
     await redis_client.setex(f"access:{access_token}", ACCESS_TOKEN_TTL, user.id)
-    await redis_client.setex(f"user_id:{user.id}:username", ACCESS_TOKEN_TTL, user.username)
+    await redis_client.setex(f"user_id:{user.id}:username", ACCESS_TOKEN_TTL, user.name)
 
     return {
         "access_token": access_token,
@@ -168,7 +184,7 @@ async def refresh(body: RefreshRequest, db: AsyncSession = Depends(get_db)):
     await db.commit()
 
     await redis_client.setex(f"access:{new_access}", ACCESS_TOKEN_TTL, user.id)
-    await redis_client.setex(f"user_id:{user.id}:username", ACCESS_TOKEN_TTL, user.username)
+    await redis_client.setex(f"user_id:{user.id}:username", ACCESS_TOKEN_TTL, user.name)
 
     return {
         "access_token": new_access,
