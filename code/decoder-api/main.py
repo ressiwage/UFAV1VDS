@@ -197,11 +197,12 @@ async def upload_video(
     token: str = Query(..., description="Одноразовый токен из /upload/token"),
     # current_user: dict = Depends(get_current_user),
 ):
+    """
+    Принимает AV1-видео, декодирует через ffmpeg (libaom) и возвращает
+    последний кадр в виде JPEG.
+    """
     try:
-        """
-        Принимает AV1-видео, декодирует через ffmpeg (libaom) и возвращает
-        последний кадр в виде JPEG.
-        """
+        print(file)
         payload = await consume_upload_otp(redis_client, token)
         necessary_ram = payload["necessary_ram"]
         print(payload)
