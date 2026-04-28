@@ -12,10 +12,13 @@ RUN ldconfig
 
 WORKDIR /app
 
-COPY requirements.txt .
+
+COPY gateway/requirements.txt .
 RUN pip install -r requirements.txt
 
-COPY . .
+COPY _shared/ ./_shared/
+COPY gateway/ .
+
 
 EXPOSE 7995
 

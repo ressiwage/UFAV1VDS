@@ -11,10 +11,10 @@ import os
 from reporter.reporter import report_loop
 from contextlib import asynccontextmanager
 import redis.asyncio as aioredis
-from _common.db.relational import engine, SessionLocal, get_db
-from _common.db.redis import redis_client, REDIS_URL
-from _common.db.nats import js_connect
-from _common.models.models import UserLogin, UserRegister, Base
+from _shared._common.db.relational import engine, SessionLocal, get_db
+from _shared._common.db.redis import redis_client, REDIS_URL
+from _shared._common.db.nats import js_connect
+from _shared._common.models.models import UserLogin, UserRegister, Base
 from nats.js import JetStreamContext
 from fastapi.middleware.cors import CORSMiddleware
 

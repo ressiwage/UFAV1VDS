@@ -5,7 +5,7 @@ import asyncio, json, time, httpx, os
 import redis.asyncio as aioredis
 from nats.js import JetStreamContext
 from contextlib import asynccontextmanager
-from _common.db.nats import js_connect
+from _shared._common.db.nats import js_connect
 from nats.errors import TimeoutError as NTimeoutError
 from fastapi.middleware.cors import CORSMiddleware
 

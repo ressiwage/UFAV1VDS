@@ -69,7 +69,9 @@ services:
 
   common-api:
     <<: *common-env
-    build: common-api/
+    build: 
+      context: .
+      dockerfile: common-api/Dockerfile
     restart: no
     ports:
       - "8000:8000"
@@ -86,7 +88,9 @@ services:
 
   decoder-api:
     <<: *common-env
-    build: decoder-api/
+    build: 
+      context: .
+      dockerfile: decoder-api/Dockerfile
     restart: no
     ports:
       - "7948:7948"
@@ -103,7 +107,9 @@ services:
 
   gateway:
     <<: *common-env
-    build: gateway/
+    build: 
+      context: .
+      dockerfile: gateway/Dockerfile
     restart: no
     ports:
       - "7995:7995"

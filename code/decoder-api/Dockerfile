@@ -79,10 +79,13 @@ RUN ldconfig
 ENV DAV1D_PATH=/usr/local/bin/dav1d
 WORKDIR /app
 
-COPY requirements.txt .
+
+COPY decoder-api/requirements.txt .
 RUN pip install -r requirements.txt
 
-COPY . .
+COPY _shared/ ./_shared/
+COPY decoder-api/ .
+
 
 EXPOSE 7948
 

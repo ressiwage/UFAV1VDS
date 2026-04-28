@@ -74,11 +74,11 @@ RUN ldconfig
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY common-api/requirements.txt .
 RUN pip install -r requirements.txt
 
-COPY . .
-COPY ../_common/ ..
+COPY _shared/ ./_shared/
+COPY common-api/ .
 
 EXPOSE 8000
 
