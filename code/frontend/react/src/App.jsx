@@ -175,15 +175,21 @@ const AuthPanel = ({ onLogin }) => {
 // Получить presigned URL и загрузить blob
 async function uploadBlob(token, blob, filename) {
   const neccessary_ram = 12345;
+  const fd = new FormData();
+  fd.append("file", blob, filename);
+  
+  const startTime = performance.now();
+
   const { url } = await fetch(
     `${API}/upload?neccessary_ram=${neccessary_ram}`,
     { method: "GET", headers: { auth: `Bearer ${token}` } }
   ).then(r => r.json());
 
-  const fd = new FormData();
-  fd.append("file", blob, filename);
   const r = await fetch(url, { method: "POST", body: fd });
   if (!r.ok) { const d = await r.json(); throw new Error(d.detail); }
+  const endTime = performance.now();
+  const totalMs = (endTime - startTime).toFixed(2);
+  console.log(`[Upload] Total time (request → image response): ${totalMs} ms`);
   return r;
 }
 

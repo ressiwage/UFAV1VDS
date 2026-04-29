@@ -73,10 +73,11 @@ COPY --from=ffmpeg-builder /usr/local/bin/ffmpeg   /usr/local/bin/ffmpeg
 COPY --from=ffmpeg-builder /usr/local/lib           /usr/local/lib
 COPY --from=ffmpeg-builder /usr/local/include       /usr/local/include
 COPY --from=ffmpeg-builder /usr/local/bin/dav1d    /usr/local/bin/dav1d
+COPY --from=ffmpeg-builder /src/dav1d /dav1d
 
 
 RUN ldconfig
-ENV DAV1D_PATH=/usr/local/bin/dav1d
+ENV DAV1D_PATH=/dav1d/build/tools/dav1d
 WORKDIR /app
 
 
