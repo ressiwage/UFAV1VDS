@@ -37,12 +37,8 @@ async def broadcast_loop():
                 dead = set()
                 client_ = clients.get(json.loads(msg.data.decode())['user_id']) or clients.get(str(json.loads(msg.data.decode())['user_id']))
                 if client_ is not None:
-                    payload = {
-                        "type": "update",
-                        "replicas": replicas,
-                        "ts": time.time()
-                    }
-                    result = await client_.send_json({**payload, **json.loads(msg.data.decode())})
+   
+                    result = await client_.send_json({ **json.loads(msg.data.decode())})
                     if isinstance(result, Exception):
                         print(result)
                         dead.add(json.loads(msg.data.decode())['user_id'])

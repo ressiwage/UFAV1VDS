@@ -6,3 +6,4 @@ code/emsdk/
 *.mkv
 code/test/*
 WSL2-Linux-Kernel/*
+snapshot_s7/
