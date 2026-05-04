@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 
-const API = "http://192.168.64.103:7995";
-const WS_API = "ws://192.168.64.103:7995";
-
+const API = "http://localhost:7995";
+const WS_API = "ws://localhost:7995";
+ 
 function useServerStream(token) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);

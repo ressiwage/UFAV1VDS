@@ -282,6 +282,7 @@ async def proxy(path: str, request: Request):
     if request.url.query:
         url += f"?{request.url.query}"
 
+    print(request.method, url, request.headers)
     async with httpx.AsyncClient() as client:
         response = await client.request(
             method=request.method,

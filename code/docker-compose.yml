@@ -98,7 +98,7 @@ services:
       <<: *common-env-vars
       GATEWAY_WS_URL: ws://gateway:7995/ws/replica
       REPLICA_ID: ${REPLICA_ID:-replica-1}
-      PUBLIC_URL: ${DECODER_PUBLIC_URL:-http://192.168.64.103:7948}
+      PUBLIC_URL: ${DECODER_PUBLIC_URL:-http://localhost:7948}
     depends_on:
       gateway:
         condition: service_started
