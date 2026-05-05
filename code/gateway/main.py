@@ -100,6 +100,7 @@ async def replica_ws(ws: WebSocket):
                 replicas[replica_id]["last_seen"] = time.time()
 
     except WebSocketDisconnect:
+        print('disconnect')
         if replica_id:
             replicas.pop(replica_id, None)
 

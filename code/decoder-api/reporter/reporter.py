@@ -15,12 +15,14 @@ async def report_loop():
             "url": PUBLIC_URL
         }))
         while True:
-            await ws.send(json.dumps({
+            payload = json.dumps({
                 "type": "heartbeat",
                 "id": REPLICA_ID,
                 "cpu": get_avg_load(),
                 "ram": get_free_ram(),
                 "num_cpu": get_cpu_count(),
                 "disk": get_free_disk()
-            }))
+            })
+            print('sending payload', payload)
+            await ws.send(payload)
             await asyncio.sleep(2)

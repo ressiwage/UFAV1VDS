@@ -8,19 +8,38 @@ from PIL import Image
 
 from core.config import DAV1D_PATH
 
+import asyncio
+import subprocess
+
 
 class VideoService:
-    def decode_first_frame(self, file_bytes: bytes) -> bytes:
-        with tempfile.TemporaryDirectory(delete=False) as tmpdir:
+    
+    async def _run(self, *args: str) -> None:
+        proc = await asyncio.create_subprocess_exec(
+            *args,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        _, stderr = await proc.communicate()
+        if proc.returncode != 0:
+            raise HTTPException(
+                status_code=422,
+                detail=f"dav1d failed: {stderr.decode()}",
+            )
+
+    async def decode_first_frame(self, file_bytes: bytes) -> bytes:
+        with tempfile.TemporaryDirectory() as tmpdir:
             input_path = os.path.join(tmpdir, "input.obu")
             frame_y4m = os.path.join(tmpdir, "frame.y4m")
 
             with open(input_path, "wb") as f:
-                print(file_bytes[:1000])
                 f.write(file_bytes)
 
-            self._validate(input_path)
-            self._decode_first_frame(input_path, frame_y4m)
+            await self._run(DAV1D_PATH, "-i", input_path, "-o", "/dev/null")
+            await self._run(
+                DAV1D_PATH, "-i", input_path, "-o", frame_y4m,
+                "--threads", "1", "--limit", "1",
+            )
             return self._y4m_to_jpeg(frame_y4m)
 
     def _validate(self, input_path: str) -> None:

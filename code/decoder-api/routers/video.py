@@ -28,7 +28,7 @@ async def upload_video(
     payload = await otp_repo.consume_upload_token(token)
 
     file_bytes = await file.read()
-    frame_bytes = video_service.decode_first_frame(file_bytes)
+    frame_bytes = await video_service.decode_first_frame(file_bytes)
 
     js, _ = await js_connect()
     try:
