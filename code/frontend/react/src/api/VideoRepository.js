@@ -19,7 +19,7 @@ export class VideoRepository {
     const startTime = performance.now();
 
     const presigned = await apiFetch(
-      `${API_BASE}/upload?neccessary_ram=${NECESSARY_RAM}`,
+      `${API_BASE}/upload?neccessary_ram=${blob.size}`,
       { method: "GET", headers: { auth: `Bearer ${token}` } }
     );
     const { url } = await presigned.json();

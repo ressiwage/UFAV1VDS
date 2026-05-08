@@ -1,2 +1,3 @@
 CPU_THRESHOLD = 0.9
-RAM_THRESHOLD = 1*(1024**3) #gb in bytes
+RAM_THRESHOLD = 200*(1024**2) #200 mb in bytes
+DISK_THRESHOLD = 1*(1024**3) # 1gb

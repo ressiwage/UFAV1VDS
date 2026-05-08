@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import selectinload
 from sqlalchemy import String, select
 import hashlib
 import secrets
@@ -11,8 +12,8 @@ import redis.asyncio as aioredis
 from nats.js import JetStreamContext
 from nats.aio.client import Client
 from contextlib import asynccontextmanager
-from _shared._common.models.models import UserLogin, UserRegister, RefreshRequest, Base, User
-from _shared._common.db.relational import engine, SessionLocal, get_db
+from _shared._common.models.models import UserLogin, UserRegister, RefreshRequest, Base, User, Archives, Videos
+from _shared._common.db.relational import engine, SessionLocal, get_db, get_db_
 from _shared._common.db.redis import redis_client, REDIS_URL
 from _shared._common.db.nats import js_connect
 from fastapi.middleware.cors import CORSMiddleware
@@ -220,7 +221,25 @@ async def get_user(current_user: dict = Depends(get_current_user)):
 
 
 @app.get("/videos")
-async def get_videos(current_user: dict = Depends(get_current_user)):
+async def get_videos(current_user: dict = Depends(get_current_user), db = Depends(get_db_)):
+    result = await db.execute(
+        select(Archives).options(selectinload(Archives.videos))
+    )
+    archives = result.scalars().all()
+    return {
+        'archives': [
+            
+                {**{k: v for k, v in r.__dict__.items() if not k.startswith('_')},
+                'videos': [
+                    {k: v for k, v in video.__dict__.items() if not k.startswith('_')}
+                    for video in r.videos
+                ]}
+            
+            for r in archives
+        ]
+    }
+    return {'archives':{r.id:r.__dict__ for r in (await db.execute(select(Archives))).scalars().all()},
+            'videos': [r.__dict__ for r in (await db.execute(select(Videos))).scalars().all()]}
     return {"archive_1": ["video_1", "video_2"], "archive_2": ["video_3"]}
 
 

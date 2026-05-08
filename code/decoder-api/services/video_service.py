@@ -6,10 +6,12 @@ import tempfile
 from fastapi import HTTPException
 from PIL import Image
 
-from core.config import DAV1D_PATH
+from core.config import DAV1D_PATH, MAX_CONCURRENT
 
 import asyncio
 import subprocess
+
+semaphore = asyncio.Semaphore(MAX_CONCURRENT)
 
 
 class VideoService:
@@ -27,8 +29,9 @@ class VideoService:
                 detail=f"dav1d failed: {stderr.decode()}",
             )
 
-    async def decode_first_frame(self, file_bytes: bytes) -> bytes:
-        with tempfile.TemporaryDirectory() as tmpdir:
+    async def decode_first_frame(self, file_bytes: bytes, in_memory: bool=True) -> bytes:
+        TDKWargs: dict = {'dir':'/dev/shm'} if in_memory else dict()
+        with tempfile.TemporaryDirectory(**TDKWargs) as tmpdir:
             input_path = os.path.join(tmpdir, "input.obu")
             frame_y4m = os.path.join(tmpdir, "frame.y4m")
 

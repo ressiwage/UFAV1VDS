@@ -23,6 +23,6 @@ async def report_loop():
                 "num_cpu": get_cpu_count(),
                 "disk": get_free_disk()
             })
-            print('sending payload', payload)
+            # print('sending payload', payload)
             await ws.send(payload)
             await asyncio.sleep(2)

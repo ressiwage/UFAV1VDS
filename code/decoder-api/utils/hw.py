@@ -17,4 +17,5 @@ def get_cpu_count() -> int:
 
 def get_avg_load():
     '''in percents, [0;1]'''
-    return (psutil.getloadavg()[0] * get_cpu_count()) / 100
+    return psutil.cpu_percent(interval=None)/100
+    # return (psutil.getloadavg()[0] * get_cpu_count()) / 100

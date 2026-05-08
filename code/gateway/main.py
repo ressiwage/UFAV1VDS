@@ -1,11 +1,12 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, Form, File, Request, Response, Query, HTTPException, Header
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, Form, File, Request, Response, Query, HTTPException, Header, Depends
 from fastapi.responses import JSONResponse, RedirectResponse
-from logic import server_rank_key, validate_bearer_via_common, issue_upload_otp
+from logic import server_rank_key, validate_bearer_via_common, issue_upload_otp, CPU_THRESHOLD, RAM_THRESHOLD, get_archive_id
 import asyncio, json, time, httpx, os
 import redis.asyncio as aioredis
 from nats.js import JetStreamContext
 from contextlib import asynccontextmanager
 from _shared._common.db.nats import js_connect
+from _shared._common.db.relational import get_db_
 from nats.errors import TimeoutError as NTimeoutError
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -241,6 +242,7 @@ async def upload_target_old(
 async def upload_target(
     neccessary_ram: int = Query(...),    
     auth: str = Header(..., description="Bearer <access_token>"),
+    db = Depends(get_db_)
 ):
     now = time.time()
     alive = {
@@ -254,19 +256,26 @@ async def upload_target(
 
     target_url = None
     for i in ranked:
-        if i["ram"] >= neccessary_ram:
+        if i["ram"] >= neccessary_ram and i['ram'] >= RAM_THRESHOLD:
             target_url = f"{i['url']}/upload"
             break
 
     if target_url is None:
+        for i in ranked:
+            if i['cpu'] >= CPU_THRESHOLD:
+                target_url=f"{i['url']}/upload/disk"
+
+    if target_url is None:
         target_url = f"{FALLBACK_QUEUE}/upload"
+
+    #TODO: добавить ограничение по диску
 
     if not auth.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Authorization header required")
 
     user = await validate_bearer_via_common(auth)
-
-    otp = await issue_upload_otp(redis_client, user["id"], neccessary_ram, OTP_TTL)
+    archive_id = await get_archive_id(db, user['id'])
+    otp = await issue_upload_otp(redis_client, user["id"], neccessary_ram, archive_id, OTP_TTL)
 
 
     return {'url':f'{target_url}?token={otp}'}

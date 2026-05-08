@@ -16,6 +16,7 @@ from routers import auth, user, video
 from db import dependencies
 
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:

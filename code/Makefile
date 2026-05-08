@@ -19,3 +19,6 @@ up-nc-f:
 
 up-nc-g:
 	docker compose up  --force-recreate --build gateway
+
+bench_ram:
+	cmdbench -v -a -j ../benchmarks/dav1d.json -p ../benchmarks/dav1d.png -i 1 "sh ../benchmarks/decoder/dav1d_mem.sh"

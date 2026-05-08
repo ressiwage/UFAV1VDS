@@ -126,17 +126,21 @@ export function VideoPanel({ token, username, onLogout, videoRepo }) {
       </button>
 
       {videos && (
-        <div style={{ marginTop: 16 }}>
-          {Object.entries(videos).map(([arch, vids]) => (
-            <div key={arch} style={{ marginBottom: 12 }}>
-              <p style={{ margin: "0 0 6px", fontSize: 11, color: "#555", letterSpacing: "0.1em", textTransform: "uppercase" }}>{arch}</p>
-              {vids.map(v => (
-                <div key={v} style={{ padding: "8px 12px", background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: 5, fontSize: 13, color: "#ccc", marginBottom: 4 }}>{v}</div>
-              ))}
+    <div style={{ marginTop: 16 }}>
+      {videos.archives.map(archive => (
+        <div key={archive.id} style={{ marginBottom: 12 }}>
+          <p style={{ margin: "0 0 6px", fontSize: 11, color: "#555", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+            {archive.name}
+          </p>
+          {archive.videos.map(v => (
+            <div key={v.id} style={{ padding: "8px 12px", background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: 5, fontSize: 13, color: "#ccc", marginBottom: 4 }}>
+              {v.full_name ?? v.name}
             </div>
           ))}
         </div>
-      )}
+      ))}
+    </div>
+  )}
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
