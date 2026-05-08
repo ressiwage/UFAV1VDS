@@ -1,0 +1,96 @@
+version: "3.9"
+
+x-common-env: &common-env-vars
+  PYTHONUNBUFFERED: "1"
+  POSTGRES_HOST: db
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: appuser
+  POSTGRES_PASSWORD: apppassword
+  POSTGRES_DB: appdb
+  REDIS_URL: redis://redis:6379/0
+  NATS_URL: nats://nats:4222
+  ACCESS_TOKEN_TTL: "900"
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: apppassword
+      POSTGRES_DB: appdb
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager  # БД только на главном узле
+
+  redis:
+    image: redis:7.2-alpine
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  nats:
+    image: nats:2.10-alpine
+    command: ["--js", "-m", "8222", "--store_dir", "/data"]
+    volumes:
+      - nats_data:/data
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  gateway:
+    image: ghcr.io/ressiwage/gateway:latest
+    environment:
+      <<: *common-env-vars
+    ports:
+      - "7995:7995"
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  decoder-api:
+    image: ghcr.io/ressiwage/decoder-api:latest
+    environment:
+      <<: *common-env-vars
+      GATEWAY_WS_URL: ws://gateway:7995/ws/replica
+      # REPLICA_ID будет уникальным через шаблон Swarm
+      REPLICA_ID: "{{.Task.Name}}"
+      PUBLIC_URL: "http://{{.Node.Hostname}}:7948"
+    ports:
+      - target: 7948
+        published: 7948
+        mode: host  # каждый узел слушает на своём порту
+    deploy:
+      replicas: 3
+      placement:
+        max_replicas_per_node: 1  # одна реплика на сервер
+      restart_policy:
+        condition: on-failure
+
+  common-api:
+    image: ghcr.io/ressiwage/common-api:latest
+    environment:
+      <<: *common-env-vars
+      PUBLIC_URL: "localhost:8000"
+    ports:
+      - "8000:8000"
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  frontend:
+    image: ghcr.io/ressiwage/frontend:latest
+    ports:
+      - "4173:4173"
+    deploy:
+      replicas: 1
+
+volumes:
+  pg_data:
+  nats_data:

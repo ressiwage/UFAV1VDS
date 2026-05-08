@@ -1,0 +1,1 @@
+set -a && source .env && set +a && echo "$GHP_TOKEN" | docker login ghcr.io -u "$GHP_LOGIN" --password-stdin
