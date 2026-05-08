@@ -24,7 +24,13 @@ bench_ram:
 	cmdbench -v -a -j ../benchmarks/dav1d.json -p ../benchmarks/dav1d.png -i 1 "sh ../benchmarks/decoder/dav1d_mem.sh"
 
 ghcr_login:
-	sh ./ghcr_login.sh
+	bash ./ghcr_login.sh
 
 ghcr_publish:
 	bash ./ghcr_publish.sh
+
+install_servers:
+	bash ./install_servers.sh
+
+up-swarm:
+	docker pull ghcr.io/ressiwage/decoder-api:latest
