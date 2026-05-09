@@ -34,3 +34,4 @@ install_servers:
 
 up-swarm:
 	docker pull ghcr.io/ressiwage/decoder-api:latest
+

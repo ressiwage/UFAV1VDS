@@ -10,6 +10,7 @@ x-common-env: &common-env-vars
   REDIS_URL: redis://redis:6379/0
   NATS_URL: nats://nats:4222
   ACCESS_TOKEN_TTL: "900"
+  COMMON_API: http://gateway:8000
 
 services:
   db:
