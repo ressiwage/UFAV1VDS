@@ -13,6 +13,10 @@ x-common-env: &common-env-vars
   COMMON_API: http://gateway:8000
   QUEUEING_ROUTE: NOTIMPLEMENTED
 
+networks:
+  backend:
+    driver: overlay
+
 services:
   db:
     image: postgres:16-alpine
@@ -26,6 +30,8 @@ services:
       placement:
         constraints:
           - node.role == manager  # БД только на главном узле
+    networks:
+      - backend
 
   redis:
     image: redis:7.2-alpine
@@ -33,6 +39,8 @@ services:
       placement:
         constraints:
           - node.role == manager
+    networks:
+      - backend
 
   nats:
     image: nats:2.10-alpine
@@ -43,6 +51,8 @@ services:
       placement:
         constraints:
           - node.role == manager
+    networks:
+      - backend
 
   gateway:
     image: ghcr.io/ressiwage/gateway:latest
@@ -54,6 +64,8 @@ services:
       placement:
         constraints:
           - node.role == manager
+    networks:
+      - backend
 
   decoder-api:
     image: ghcr.io/ressiwage/decoder-api:latest
@@ -73,6 +85,8 @@ services:
         max_replicas_per_node: 1  # одна реплика на сервер
       restart_policy:
         condition: on-failure
+    networks:
+      - backend
 
   common-api:
     image: ghcr.io/ressiwage/common-api:latest
@@ -85,6 +99,8 @@ services:
       placement:
         constraints:
           - node.role == manager
+    networks:
+      - backend
 
   frontend:
     image: ghcr.io/ressiwage/frontend:latest
@@ -92,6 +108,8 @@ services:
       - "4173:4173"
     deploy:
       replicas: 1
+    networks:
+      - backend
 
 volumes:
   pg_data:
