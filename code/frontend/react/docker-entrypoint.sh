@@ -19,6 +19,7 @@ EOF
 
 echo "Runtime config:"
 cat /app/public/env-config.js
+echo "dist"
 cat /app/dist/env-config.js
 
 exec npm run preview -- --host 0.0.0.0 --port 4173
