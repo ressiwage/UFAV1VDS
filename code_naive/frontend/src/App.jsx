@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 
-const API = "http://192.168.64.103:8000";
+const API = "http://localhost:8000";
 
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────

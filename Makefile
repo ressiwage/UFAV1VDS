@@ -38,3 +38,6 @@ david_perfproff:
 
 david_show:
 	bash code/scripts/david_compare.sh code/tvav.obu
+
+david_show_save:
+	bash code/scripts/david_comp_save.sh code/tvav.obu

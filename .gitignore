@@ -7,3 +7,4 @@ code/emsdk/
 code/test/*
 WSL2-Linux-Kernel/*
 snapshot_s7/
+**/.env
