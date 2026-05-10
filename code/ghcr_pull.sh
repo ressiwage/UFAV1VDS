@@ -11,7 +11,7 @@ IMAGES=(
 )
 
 
-
+cd HSE-DIPLOMA-6; git pull | echo 'pull failed'
 # Цикл по всем образам
 for i in "${!IMAGES[@]}"; do
     image="${IMAGES[$i]}"

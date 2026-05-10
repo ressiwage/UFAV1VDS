@@ -39,6 +39,8 @@ services:
       placement:
         constraints:
           - node.role == manager
+    ports:
+    - "6379:6379"
     networks:
       - backend
 
@@ -51,6 +53,8 @@ services:
       placement:
         constraints:
           - node.role == manager
+    ports:
+    - "4222:4222"
     networks:
       - backend
 
