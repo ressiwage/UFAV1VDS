@@ -42,4 +42,4 @@ delete-unused:
 deploy: 
 	docker stack deploy -c docker-stack.yml myapp
 force-redeploy:
-	docker stack services myapp --format '{{.Name}}' | xargs -I{} docker service update --force {}
+	bash ./ghcr_hard_redresh.sh

@@ -1,8 +1,8 @@
-// const env = window.__ENV__ || {};
+const env = window.__ENV__ || {};
 
 
-export const API_BASE = 'http://gateway:7995';
-export const WS_BASE  = 'ws://gateway:7995/ws/url';
+export const API_BASE = env.GATEWAY_URL;
+export const WS_BASE  = env.GATEWAY_WS_URL;
 
 console.log("AB WB", API_BASE, WS_BASE)
 
