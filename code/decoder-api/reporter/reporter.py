@@ -1,9 +1,13 @@
 import asyncio, psutil, websockets, os, json
 from utils.hw import get_avg_load, get_cpu_count, get_free_disk, get_free_ram
 
+IPS = {
+  'msk-1-vm-zcps': '194.87.131.81',
+  '7624415-eg826155.twc1.net': '72.56.39.104'
+}
 GATEWAY_WS = os.environ["GATEWAY_WS_URL"]  # ws://gateway:8080/ws/replica
 REPLICA_ID  = os.environ["REPLICA_ID"]      # api-1, api-2, ...
-PUBLIC_URL  = os.environ["PUBLIC_URL"]       # http://api-1:8001
+PUBLIC_URL  = f"http://{IPS[os.environ['HOSTNAME']]}:7948"       # http://api-1:8001
 
 async def report_loop():
     print("создаю хуйню")

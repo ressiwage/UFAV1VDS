@@ -74,7 +74,8 @@ services:
       GATEWAY_WS_URL: ws://194.87.131.81:7995/ws/replica
       # REPLICA_ID будет уникальным через шаблон Swarm
       REPLICA_ID: "{{.Task.Name}}"
-      PUBLIC_URL: "http://{{.Node.Labels.public_ip}}:7948"
+      PUBLIC_URL: "http://{{.Node.Hostname}}:7948"
+      HOSTNAME: "{{.Node.Hostname}}"
     ports:
       - target: 7948
         published: 7948
@@ -109,8 +110,9 @@ services:
     deploy:
       replicas: 1
     environment:
-      GATEWAY_WS_URL: ws://{{.Node.Labels.public_ip}}:7995/ws/replica
-      GATEWAY_URL: http://{{.Node.Labels.public_ip}}:7995
+      GATEWAY_WS_URL: ws://{{.Node.Hostname}}:7995/ws/replica
+      GATEWAY_URL: http://{{.Node.Hostname}}:7995
+      HOSTNAME: "{{.Node.Hostname}}"
     networks:
       - backend
 
