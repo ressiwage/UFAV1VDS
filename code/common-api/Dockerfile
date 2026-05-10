@@ -19,39 +19,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 
-RUN git clone https://github.com/ressiwage/DAV2D.git /src/dav1d && \
-    cd /src/dav1d && meson setup build -Denable_asm=false --buildtype=release && cd build && ninja  && ninja install
-
-# ffmpeg с поддержкой libaom
-RUN curl -fsSL https://ffmpeg.org/releases/ffmpeg-7.1.tar.bz2 | tar -xj -C /src && \
-    cd /src/ffmpeg-7.1 && \
-    ./configure \
-        --prefix=/usr/local \
-        --disable-everything \
-        --disable-doc \
-        --disable-htmlpages \
-        --disable-manpages \
-        --disable-podpages \
-        --disable-txtpages \
-        --disable-network \
-        --disable-autodetect \
-        --disable-ffplay \
-        --disable-ffprobe \
-        --enable-demuxer=ivf \
-        --enable-demuxer=mov \
-        --enable-demuxer=matroska \
-        --enable-libdav1d \
-        --enable-decoder=dav1d \
-        --enable-muxer=image2 \
-        --enable-encoder=mjpeg \
-        --enable-filter=thumbnail \
-        --enable-filter=scale \
-        --enable-protocol=file \
-        --extra-cflags="-I/usr/local/include" \
-        --extra-ldflags="-L/usr/local/lib" && \
-    make -j$(nproc) && \
-    make install
-
 # ──────────────────────────────────────────────
 # Stage 2: финальный образ
 # ──────────────────────────────────────────────
@@ -65,10 +32,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Копируем собранный ffmpeg + libaom из stage 1
-COPY --from=ffmpeg-builder /usr/local/bin/ffmpeg   /usr/local/bin/ffmpeg
-COPY --from=ffmpeg-builder /usr/local/lib           /usr/local/lib
-COPY --from=ffmpeg-builder /usr/local/include       /usr/local/include
+
 
 RUN ldconfig
 

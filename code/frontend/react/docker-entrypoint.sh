@@ -5,7 +5,7 @@ cat > /app/dist/env-config.js << EOF
 window.__ENV__ = {
   GATEWAY_URL: "${GATEWAY_URL}",
   GATEWAY_WS_URL: "${GATEWAY_WS_URL}",
-  HOSTNAME: ${HOSTNAME}
+  HOSTNAME: "${HOSTNAME}"
 };
 EOF
 

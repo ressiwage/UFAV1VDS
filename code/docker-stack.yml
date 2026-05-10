@@ -7,10 +7,10 @@ x-common-env: &common-env-vars
   POSTGRES_USER: appuser
   POSTGRES_PASSWORD: apppassword
   POSTGRES_DB: appdb
-  REDIS_URL: redis://redis:6379/0
-  NATS_URL: nats://nats:4222
+  REDIS_URL: redis://194.87.131.81:6379/0
+  NATS_URL: nats://194.87.131.81:4222
   ACCESS_TOKEN_TTL: 3600
-  COMMON_API: http://gateway:8000
+  COMMON_API: http://194.87.131.81:8000
   QUEUEING_ROUTE: NOTIMPLEMENTED
 
 networks:

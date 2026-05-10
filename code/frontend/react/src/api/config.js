@@ -1,12 +1,12 @@
-// const env = window.__ENV__ || {};
+const env = window.__ENV__ || {};
 
 var IPS = {
   'msk-1-vm-zcps': '194.87.131.81',
   '7624415-eg826155.twc1.net': '72.56.39.104'
 }
 
-export const API_BASE = `http://194.87.131.81:7995`;
-export const WS_BASE  = `ws://194.87.131.81:7995/ws/replica`;
+export const API_BASE = `http://${IPS[env.HOSTNAME]}:7995`;
+export const WS_BASE  = `ws://${IPS[env.HOSTNAME]}:7995/ws/replica`;
 
 console.log("AB WB", API_BASE, WS_BASE)
 
