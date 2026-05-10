@@ -35,3 +35,11 @@ install_servers:
 up-swarm:
 	docker pull ghcr.io/ressiwage/decoder-api:latest
 
+delete-unused:
+	docker images -q | xargs docker rmi -f 2>/dev/null
+	docker system prune -af --volumes
+
+deploy: 
+	docker stack deploy -c docker-stack.yml myapp
+force-redeploy:
+	docker stack services myapp --format '{{.Name}}' | xargs -I{} docker service update --force {}

@@ -35,9 +35,9 @@ for i in "${!IMAGES[@]}"; do
 
     echo ">>> Building $image ..."
     if [ -n "$dockerfile" ]; then
-        docker build -t "$image" -f "$dockerfile" "$context"
+        docker build --no-cache -t "$image" -f "$dockerfile" "$context"
     else
-        docker build -t "$image" "$context"
+        docker build --no-cache -t "$image" "$context"
     fi
 
     echo ">>> Pushing $image ..."

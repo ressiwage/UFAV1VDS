@@ -1,0 +1,1 @@
+docker stack services myapp --format '{{.Name}}' | xargs -I{} docker service update --force {}

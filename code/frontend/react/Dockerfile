@@ -8,6 +8,9 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 EXPOSE 4173
-# vite preview — встроенный статический сервер, без nginx
-CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "4173"]
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
