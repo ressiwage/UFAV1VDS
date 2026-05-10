@@ -43,3 +43,5 @@ deploy:
 	docker stack deploy -c docker-stack.yml myapp
 force-redeploy:
 	bash ./ghcr_hard_redresh.sh
+force_redeploy-react:
+	docker service update --force --image ghcr.io/ressiwage/frontend:latest myapp_frontend
