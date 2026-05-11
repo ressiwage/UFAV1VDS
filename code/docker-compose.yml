@@ -12,6 +12,7 @@ x-common-env: &common-env
     REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
     ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-900}
     NATS_URL: ${NATS_URL:-nats://nats:4222}
+    HOSTNAME: 'default'
 
 services:
   db:
@@ -104,6 +105,7 @@ services:
         condition: service_started
       db:
         condition: service_healthy
+    shm_size: '2gb'
 
   gateway:
     <<: *common-env
@@ -125,6 +127,8 @@ services:
     <<: *common-env
     build: frontend/react/
     restart: always
+    environment:
+      HOSTNAME: 'default' 
     ports:
       - "4173:4173"
 

@@ -16,3 +16,8 @@ Client                  Gateway                 Redis               Auth API / R
   │ <── {url: replica} ────│                      │                       │
 
 схема токенов в upload
+
+
+
+ваниль: 283495.60 ms
+опт: 165952.60 

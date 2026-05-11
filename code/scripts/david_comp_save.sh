@@ -1,22 +1,25 @@
 #!/usr/bin/env bash
 # =============================================================================
-# dav1d_encode.sh
-# Декодирует OBU-файл через dav1d, обрезает 5-минутные клипы и сохраняет
-# сравнение (оригинал | декодированное | разница яркостей) как H.264 видео.
+# dav1d_compare.sh
+# Декодирует OBU-файл через dav1d, склеивает 5-минутное видео и 
+# КОДИРУЕТ сравнительное видео (оригинал | decoded | diff)
 # =============================================================================
-set -euo pipefail
+# set -euo pipefail
 
 # ---------------------------------------------------------------------------
-# Настройки — при необходимости измените под свою среду
+# Настройки — поправьте под свою среду
 # ---------------------------------------------------------------------------
-OBU_FILE="${1:-/path/to/reference.obu}"   # эталонный OBU (можно передать аргументом)
-OUTPUT_VIDEO="comparison_$(date +%Y%m%d_%H%M%S).mp4"  # имя выходного файла
-DAV1D_BIN="code/decoder/build/tools/dav1d"               # путь к dav1d
-ORIG_VIDEO="code/tvav.obu"                               # оригинальное 30-минутное видео
-DECODED_RAW="code/test/decoded_dav1d.y4m"                # промежуточный y4m от dav1d
-DECODED_CLIP="code/test/decoded_5min.mp4"                # обрезанный декодированный клип
-ORIG_CLIP="code/test/original_5min.mp4"                  # обрезанный оригинальный клип
-CLIP_DURATION=60                                        # 5 минут в секундах
+OBU_FILE=code/tvav2.1.obu   # эталонный OBU (можно передать аргументом)
+DAV1D_BIN="code/decoder/build/tools/dav1d"               
+ORIG_VIDEO="code/test/tvav_david_reference_30m.y4m"       
+# ORIG_VIDEO=code/tvav2.1.obu
+DECODED_RAW="code/test/decoded_dav1d.y4m"     
+# DECODED_RAW=code/tvav2.1.obu
+DECODED_CLIP="code/test/decoded_5min.mp4"     
+ORIG_CLIP="code/test/clip.mp4"
+CLIP_DURATION=30                        
+
+OUTPUT_COMPARISON="code/test/comparison_5min${NUM_ITER}.mp4"   # ← Новый файл
 
 # ---------------------------------------------------------------------------
 # Вспомогательные функции
@@ -40,7 +43,7 @@ check_deps() {
 # 1. Декодирование OBU через dav1d → y4m
 # ---------------------------------------------------------------------------
 decode_obu() {
-    info "Декодирую $OBU_FILE через dav1d (y4m)..."
+    info "Декодирую $OBU_FILE через dav1d..."
     "$DAV1D_BIN" \
         --input  "$OBU_FILE" \
         --threads 6 \
@@ -49,72 +52,61 @@ decode_obu() {
 }
 
 # ---------------------------------------------------------------------------
-# 2. Нарезка первых CLIP_DURATION секунд (уже в H.264)
+# 2. Нарезка первых 5 минут
 # ---------------------------------------------------------------------------
 trim_clips() {
-    info "Нарезаю первые ${CLIP_DURATION}с из оригинала (H.264)..."
+    info "Нарезаю первые ${CLIP_DURATION}с из оригинала..."
     ffmpeg -y -i "$ORIG_VIDEO" \
         -t "$CLIP_DURATION" \
-        -c:v libx264 -crf 18 -preset fast \
+        -vf "fps=25" \
+        -c:v h264  \
         -an "$ORIG_CLIP" \
         -loglevel warning
     ok "Оригинальный клип → $ORIG_CLIP"
 
-    info "Нарезаю первые ${CLIP_DURATION}с из декодированного y4m (H.264)..."
+    info "Нарезаю первые ${CLIP_DURATION}с из декодированного y4m..."
     ffmpeg -y -i "$DECODED_RAW" \
         -t "$CLIP_DURATION" \
-        -c:v libx264 -crf 18 -preset fast \
+        -vf "fps=25" \
+        -c:v h264 \
         -an "$DECODED_CLIP" \
         -loglevel warning
     ok "Декодированный клип → $DECODED_CLIP"
 }
 
 # ---------------------------------------------------------------------------
-# 3. Кодирование сравнения (оригинал | декодированное | разница) в H.264
+# 3. Кодирование сравнительного видео (3 экрана)
 # ---------------------------------------------------------------------------
 encode_comparison() {
-    info "Создаю видео сравнения и кодирую его в H.264..."
-    info "  Левый:  оригинал"
-    info "  Центр:  декодированное"
-    info "  Правый: разница яркостей (усиленная, фуксия)"
-    info "Выходной файл: $OUTPUT_VIDEO"
+    info "Кодирую сравнительное видео (оригинал | decoded | luma diff)..."
+    info "Выход: $OUTPUT_COMPARISON"
 
-    # Порог яркостной разницы (оставлено из оригинального скрипта)
-    local THRESH=1
-
-    ffmpeg -hide_banner -loglevel warning \
+    ffmpeg -y -hide_banner -loglevel warning \
         -i "$ORIG_CLIP" \
         -i "$DECODED_CLIP" \
         -filter_complex "
-            movie='${ORIG_CLIP}',   setpts=PTS-STARTPTS [A];
-        movie='${DECODED_CLIP}',setpts=PTS-STARTPTS [B];
+            [0:v]setpts=PTS-STARTPTS, fps=25[A];
+            [1:v]setpts=PTS-STARTPTS, fps=25[B];
 
-        [A] split=2 [A1][A2];
-        [B] split=2 [B1][B2];
+            [A]split=2[A1][A2];
+            [B]split=2[B1][B2];
 
-        [A1][B1] blend=all_mode=subtract,
-                 format=yuv420p,
-                 lutyuv=y='val*25':u=128:v=128
-                 [luma_mask];
+            [A1][B1]blend=all_mode=subtract,format=yuv420p,
+                     lutyuv=y='val*25':u=128:v=128[luma_mask];
 
-[luma_mask] lutrgb=
-    r='val':
-    g='0':
-    b='val'
-    [with_fuchsia];
+            [luma_mask]lutrgb=r=val:g=0:b=val[with_fuchsia];
 
+            [A2][B2]hstack=inputs=2[top];
+            [with_fuchsia]pad=iw*2:ih:(ow-iw)/2:0:black[bottom];
 
-        [A2][B2] hstack=inputs=2 [top_row];
-
-        [with_fuchsia] pad=iw*2:ih:(ow-iw)/2:0:black [bottom_row];
-
-        [top_row][bottom_row] vstack=inputs=2
+            [top][bottom]vstack=inputs=2[out]
         " \
         -map "[out]" \
-        -c:v libx264 -crf 18 -preset fast \
-        "$OUTPUT_VIDEO"
+        -c:v h264  \
+        -pix_fmt yuv420p \
+        "$OUTPUT_COMPARISON"
 
-    ok "Сравнение сохранено как $OUTPUT_VIDEO"
+    ok "Сравнительное видео сохранено: $OUTPUT_COMPARISON"
 }
 
 # ---------------------------------------------------------------------------
@@ -125,8 +117,6 @@ main() {
     decode_obu
     trim_clips
     encode_comparison
-
-    info "Готово. Выходной файл: $OUTPUT_VIDEO"
 }
 
 main "$@"

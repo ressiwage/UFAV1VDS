@@ -40,6 +40,7 @@ RUN curl -fsSL https://ffmpeg.org/releases/ffmpeg-7.1.tar.bz2 | tar -xj -C /src 
         --disable-ffplay \
         --disable-ffprobe \
         --enable-demuxer=ivf \
+        --enable-demuxer=obu \
         --enable-demuxer=mov \
         --enable-demuxer=matroska \
         --enable-libdav1d \
@@ -49,6 +50,9 @@ RUN curl -fsSL https://ffmpeg.org/releases/ffmpeg-7.1.tar.bz2 | tar -xj -C /src 
         --enable-filter=thumbnail \
         --enable-filter=scale \
         --enable-protocol=file \
+        --enable-muxer=ivf \
+        --enable-muxer=av1 \
+        --enable-muxer=obu \
         --extra-cflags="-I/usr/local/include" \
         --extra-ldflags="-L/usr/local/lib" && \
     make -j$(nproc) && \

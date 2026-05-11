@@ -43,6 +43,7 @@ decode_obu() {
     "$DAV1D_BIN" \
         --input  "$OBU_FILE" \
         --threads 6 \
+        --limit 1000 \
         --output "$DECODED_RAW" 
     ok "Декодирование завершено → $DECODED_RAW"
 }

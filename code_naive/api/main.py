@@ -5,32 +5,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from contextlib import asynccontextmanager
 import hashlib, secrets, os, random, subprocess, tempfile
-import redis.asyncio as aioredis
-from nats.js import JetStreamContext
-from nats.aio.client import Client
+from pathlib import Path
 from fastapi.middleware.cors import CORSMiddleware
-
 from _shared._common.models.models import UserLogin, UserRegister, RefreshRequest, Base, User
 from _shared._common.db.relational import engine, SessionLocal, get_db
 
 
 ACCESS_TOKEN_TTL = int(os.getenv("ACCESS_TOKEN_TTL", 900))
-DAV1D_PATH = os.environ.get("DAV1D_PATH", "")
-FFMPEG_PATH = 'FFMPEG'
-
+DAV1D_PATH = os.environ.get("DAV1D_PATH", "dav1d")
+FFMPEG_PATH = os.environ.get("FFMPEG_PATH", "ffmpeg")
 
 
 # ─── Lifespan ─────────────────────────────────────────────────────────────────
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-
-    
     yield
-
 
 
 app = FastAPI(lifespan=lifespan)
@@ -56,15 +48,10 @@ async def get_current_user(
     db: AsyncSession = Depends(get_db),
 ):
     token = credentials.credentials
-
-
-
     result = await db.execute(select(User).where(User.access_token == token))
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
-
-
     return {"id": user.id, "username": user.name}
 
 
@@ -107,7 +94,6 @@ async def login(body: UserLogin, db: AsyncSession = Depends(get_db)):
     user.refresh_token = refresh_token
     await db.commit()
 
-
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -130,7 +116,6 @@ async def refresh(body: RefreshRequest, db: AsyncSession = Depends(get_db)):
     user.refresh_token = new_refresh
     await db.commit()
 
-
     return {
         "access_token": new_access,
         "refresh_token": new_refresh,
@@ -145,8 +130,6 @@ async def logout(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: AsyncSession = Depends(get_db),
 ):
-    token = credentials.credentials
-
     result = await db.execute(select(User).where(User.id == current_user["id"]))
     user = result.scalar_one_or_none()
     if user:
@@ -168,106 +151,169 @@ async def get_videos(current_user: dict = Depends(get_current_user)):
 
 
 # ─── Video routes ─────────────────────────────────────────────────────────────
-import io
-from PIL import Image
+
 @app.post("/upload")
 async def upload_video(file: UploadFile = File(...)):
-    """Принимает MP4/MKV с AV1-видео, извлекает OBU-поток через ffmpeg,
-    декодирует первый кадр через dav1d и возвращает его в виде JPEG."""
+    """
+    Принимает MP4/MKV (с AV1 видео), извлекает raw AV1 OBU через ffmpeg,
+    декодирует первый кадр через dav1d и возвращает JPEG.
+    """
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Filename is required")
+
+    ext = Path(file.filename).suffix.lower()
+    if ext not in {".mp4", ".mkv", ".webm", ".mov"}:
+        raise HTTPException(status_code=422, detail="Supported formats: MP4, MKV, WebM, MOV")
+
     with tempfile.TemporaryDirectory() as tmpdir:
-        input_container = os.path.join(tmpdir, "input." + file.filename.split('.')[-1])
-        with open(input_container, "wb") as f:
-            while chunk := await file.read(8192):
-                f.write(chunk)
-        obu_path = os.path.join(tmpdir, "stream.obu")
+        tmp_path = Path(tmpdir)
+
+        input_path = tmp_path / f"input{ext}"
+        obu_path = tmp_path / "stream.obu"
+        y4m_path = tmp_path / "frame.y4m"
+
+        # Сохраняем загруженный файл
+        with open(input_path, "wb") as f:
+            chunk = await file.read()
+            f.write(chunk)
+
+        # 1. Извлекаем raw AV1 OBU (Annex-B / OBU)
         result = subprocess.run(
-            [FFMPEG_PATH, "-i", input_container, "-c", "copy", "-f", "av1", obu_path],
+            [
+                FFMPEG_PATH,
+                "-i", str(input_path),
+                "-c:v", "copy",
+                str(obu_path)
+            ],
             capture_output=True,
+            text=True,
         )
+        print(result.stderr, result.stdout)
+
         if result.returncode != 0:
             raise HTTPException(
                 status_code=422,
-                detail=f"ffmpeg conversion to OBU failed: {result.stderr.decode()}"
+                detail=f"ffmpeg OBU extraction failed: {result.stderr.strip()}"
             )
-        result = subprocess.run(
-            [DAV1D_PATH, "-i", obu_path, "-o", "/dev/null"],
+
+        dec = subprocess.run(
+            [
+                DAV1D_PATH,
+                "-i", str(obu_path),
+                "-o", '/dev/null',
+                "--threads", "1",
+            ],
             capture_output=True,
+            text=True,
         )
+        print(dec.stdout, dec.stderr)
+
+
+        if not obu_path.exists() or obu_path.stat().st_size == 0:
+            raise HTTPException(status_code=422, detail="Failed to extract AV1 bitstream (empty OBU)")
+
+        # 2. Декодируем первый кадр через dav1d
+        result = subprocess.run(
+            [
+                DAV1D_PATH,
+                "-i", str(obu_path),
+                "-o", str(y4m_path),
+                "--limit", "1",
+                "--threads", "1",
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        
         if result.returncode != 0:
             raise HTTPException(
                 status_code=422,
-                detail=f"dav1d decode failed: {result.stderr.decode()}",
+                detail=f"dav1d decode failed: {result.stderr.strip()}"
             )
-        frame_y4m = os.path.join(tmpdir, "frame.y4m")
-        result = subprocess.run(
-            [DAV1D_PATH, "-i", obu_path, "-o", frame_y4m, "--threads", "1", "--limit", "1"],
-            capture_output=True,
-        )
-        if result.returncode != 0:
-            raise HTTPException(
-                status_code=422,
-                detail=f"dav1d first-frame decode failed: {result.stderr.decode()}",
-            )    
-        frame_bytes = _y4m_to_jpeg(frame_y4m)
+
+        if not y4m_path.exists() or y4m_path.stat().st_size == 0:
+            raise HTTPException(status_code=422, detail="dav1d did not produce output frame")
+
+        # 3. Конвертируем Y4M → JPEG
+        frame_bytes = _y4m_to_jpeg(str(y4m_path))
+
     return Response(content=frame_bytes, media_type="image/jpeg")
 
 
 def _y4m_to_jpeg(y4m_path: str, quality: int = 85) -> bytes:
-    """Парсит первый кадр из Y4M-файла и возвращает JPEG-байты."""
+    """Парсит первый кадр Y4M и возвращает JPEG."""
+    import io
+    from PIL import Image
+
     with open(y4m_path, "rb") as f:
         raw = f.read()
 
-    # --- разбор заголовка файла ---
-    header_end = raw.index(b"\n")
-    header = raw[:header_end].decode()
-    # пример: YUV4MPEG2 W1920 H1080 F30:1 Ip A0:0 C420jpeg
-    params = {
-        token[0]:token[1:]
-        for token in header.split()
-        if len(token) > 1 and token[0] in "WHC"
-    }
-    width = int(params["W"])
-    height = int(params["H"])
-    color_space = params.get("C", "420")  # 420 / 444 / mono …
+    # Заголовок файла
+    header_end = raw.index(b"\n") + 1
+    header = raw[:header_end].decode("ascii", errors="ignore").strip()
 
-    # --- первый кадр ---
-    frame_start = raw.index(b"FRAME", header_end) + len(b"FRAME")
-    # пропускаем необязательные параметры кадра до \n
-    frame_start = raw.index(b"\n", frame_start) + 1
+    # Парсим параметры (W1920 H1080 C420jpeg ...)
+    params = {}
+    for token in header.split():
+        if token.startswith("W"):
+            params["W"] = int(token[1:])
+        elif token.startswith("H"):
+            params["H"] = int(token[1:])
+        elif token.startswith("C"):
+            params["C"] = token[1:]
 
+    width = params.get("W")
+    height = params.get("H")
+    color_space = params.get("C", "420")
+
+    if not width or not height:
+        raise ValueError("Не удалось определить разрешение из Y4M")
+
+    # Находим начало первого FRAME
+    frame_marker_pos = raw.find(b"FRAME", header_end)
+    if frame_marker_pos == -1:
+        raise ValueError("FRAME marker not found in Y4M")
+
+    frame_start = raw.index(b"\n", frame_marker_pos) + 1
+
+    # Обработка разных цветовых форматов
     if color_space.startswith("420"):
         y_size = width * height
         uv_size = (width // 2) * (height // 2)
-        y  = raw[frame_start : frame_start + y_size]
-        cb = raw[frame_start + y_size : frame_start + y_size + uv_size]
-        cr = raw[frame_start + y_size + uv_size : frame_start + y_size + uv_size * 2]
 
-        y_plane  = Image.frombytes("L", (width, height), y)
-        cb_plane = Image.frombytes("L", (width // 2, height // 2), cb).resize((width, height), Image.BILINEAR)
-        cr_plane = Image.frombytes("L", (width // 2, height // 2), cr).resize((width, height), Image.BILINEAR)
-        img = Image.merge("YCbCr", (y_plane, cb_plane, cr_plane)).convert("RGB")
+        y = raw[frame_start : frame_start + y_size]
+        u = raw[frame_start + y_size : frame_start + y_size + uv_size]
+        v = raw[frame_start + y_size + uv_size : frame_start + y_size + uv_size * 2]
+
+        y_plane = Image.frombytes("L", (width, height), y)
+        u_plane = Image.frombytes("L", (width // 2, height // 2), u).resize((width, height), Image.BILINEAR)
+        v_plane = Image.frombytes("L", (width // 2, height // 2), v).resize((width, height), Image.BILINEAR)
+
+        img = Image.merge("YCbCr", (y_plane, u_plane, v_plane)).convert("RGB")
 
     elif color_space.startswith("444"):
         plane_size = width * height
-        y  = raw[frame_start : frame_start + plane_size]
-        cb = raw[frame_start + plane_size : frame_start + plane_size * 2]
-        cr = raw[frame_start + plane_size * 2 : frame_start + plane_size * 3]
+        y = raw[frame_start : frame_start + plane_size]
+        u = raw[frame_start + plane_size : frame_start + plane_size * 2]
+        v = raw[frame_start + plane_size * 2 : frame_start + plane_size * 3]
 
-        y_plane  = Image.frombytes("L", (width, height), y)
-        cb_plane = Image.frombytes("L", (width, height), cb)
-        cr_plane = Image.frombytes("L", (width, height), cr)
-        img = Image.merge("YCbCr", (y_plane, cb_plane, cr_plane)).convert("RGB")
+        y_plane = Image.frombytes("L", (width, height), y)
+        u_plane = Image.frombytes("L", (width, height), u)
+        v_plane = Image.frombytes("L", (width, height), v)
 
-    elif color_space.startswith("mono"):
+        img = Image.merge("YCbCr", (y_plane, u_plane, v_plane)).convert("RGB")
+
+    elif color_space.startswith(("mono", "400")):
         y = raw[frame_start : frame_start + width * height]
         img = Image.frombytes("L", (width, height), y).convert("RGB")
-
     else:
-        raise ValueError(f"Неподдерживаемый цветовой формат Y4M: {color_space}")
+        raise ValueError(f"Неподдерживаемый цветовой формат: {color_space}")
 
     buf = io.BytesIO()
-    img.save(buf, format="JPEG", quality=quality)
+    img.save(buf, format="JPEG", quality=quality, optimize=True)
     return buf.getvalue()
+
 
 # ─── Root ─────────────────────────────────────────────────────────────────────
 

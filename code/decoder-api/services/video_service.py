@@ -36,9 +36,10 @@ class VideoService:
             frame_y4m = os.path.join(tmpdir, "frame.y4m")
 
             with open(input_path, "wb") as f:
+                print(len(file_bytes))
                 f.write(file_bytes)
 
-            await self._run(DAV1D_PATH, "-i", input_path, "-o", "/dev/null")
+            await self._run(DAV1D_PATH, "-i", input_path, "--threads", "1", "-o", "/dev/null")
             await self._run(
                 DAV1D_PATH, "-i", input_path, "-o", frame_y4m,
                 "--threads", "1", "--limit", "1",

@@ -118,12 +118,9 @@ async function uploadBlob(token, blob, filename) {
   const neccessary_ram = 12345;
   const fd = new FormData();
   fd.append("file", blob, filename);
-  const startTime = performance.now();
   const r = await fetch(`${API}/upload?neccessary_ram=${neccessary_ram}`, { method: "POST", body: fd });
   if (!r.ok) { const d = await r.json(); throw new Error(d.detail); }
-  const endTime = performance.now();
-  const totalMs = (endTime - startTime).toFixed(2);
-  console.log(`[Upload] Total time (request → image response): ${totalMs} ms`);
+
   return r;
 }
 
@@ -140,9 +137,14 @@ const VideoPanel = ({ token, username, onLogout }) => {
   const upload = async (file) => {
     setUploading(true); setFrame(null); setNotice({ msg: "", type: "" });
     try {
+      const startTime = performance.now();
+
       const r = await uploadBlob(token, file, file.name);
       const blob = await r.blob();
       setFrame(URL.createObjectURL(blob));
+      const endTime = performance.now();
+        const totalMs = (endTime - startTime).toFixed(2);
+  console.log(`[Upload] Total time (request → image response): ${totalMs} ms`);
       setNotice({ msg: "Last frame extracted", type: "ok" });
     } catch (e) {
       setNotice({ msg: e.message, type: "error" });

@@ -173,6 +173,20 @@ function useServerStream(token: string | null) {
 
 STALE_TIMEOUT = 10  # секунд без heartbeat — реплика считается мёртвой
 
+@app.get("/info")
+async def info():
+    now = time.time()
+
+    alive = {
+        rid: data for rid, data in replicas.items()
+        if now - data["last_seen"] < STALE_TIMEOUT
+    }
+    payload = {
+        'alive':alive,
+        'all':replicas
+    }
+    return payload
+
 @app.post("/upload",openapi_extra={
         "requestBody": {
             "content": {
@@ -201,6 +215,9 @@ async def upload_target_old(
         rid: data for rid, data in replicas.items()
         if now - data["last_seen"] < STALE_TIMEOUT
     }
+
+    print(alive)
+
     if not alive:
         return JSONResponse({"error": "no replicas available"}, status_code=503)
 

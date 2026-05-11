@@ -1,5 +1,7 @@
 comexp/
 code/FFFMPEG/
+code/nv-codec-headers
+code/ffmpeg
 code/emsdk/
 .vscode/
 *.obu

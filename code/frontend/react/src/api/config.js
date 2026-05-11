@@ -2,7 +2,8 @@ const env = window.__ENV__ || {};
 
 var IPS = {
   'msk-1-vm-zcps': '194.87.131.81',
-  '7624415-eg826155.twc1.net': '72.56.39.104'
+  '7624415-eg826155.twc1.net': '72.56.39.104',
+  'default': 'localhost'
 }
 
 export const API_BASE = `http://${IPS[env.HOSTNAME]}:7995`;

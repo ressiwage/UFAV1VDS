@@ -114,7 +114,7 @@ services:
     deploy:
       replicas: 1
     environment:
-      GATEWAY_WS_URL: ws://{{.Node.Hostname}}:7995/ws/replica
+      GATEWAY_WS_URL: ws://194.87.131.81:7995/ws/replica
       GATEWAY_URL: http://{{.Node.Hostname}}:7995
       HOSTNAME: "{{.Node.Hostname}}"
     networks:
