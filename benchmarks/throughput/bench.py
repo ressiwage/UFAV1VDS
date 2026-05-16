@@ -12,13 +12,14 @@ ITEMS = [
     {'obu':PATH_37_MB, 'mkv':PATH_38MB_MKV}
 ]
 
-GATEWAY_URL = 'http://194.87.131.81:7995'
+GATEWAY_URL = 'http://72.56.39.104:8000'
 
 import requests, os, random, time, threading
 
 def upload_simple( file):
     global ACCESS
-    pass
+    file_status = requests.post(f"{GATEWAY_URL}/upload", files={'file':open(ITEMS[file]['mkv'], 'rb')}, headers={'accept': 'application/json'})
+    return file_status.text
 
 def upload_opt(file):
     global ACCESS
@@ -92,4 +93,4 @@ def parallel(out, file_index, upload_func, workers=50, iterations=50):
     out.flush()
 
 with open(rep, 'w+') as out:
-    parallel(out, 2, upload_opt)    
+    parallel(out, 2, upload_simple)    
