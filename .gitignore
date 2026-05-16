@@ -10,3 +10,4 @@ code/test/*
 WSL2-Linux-Kernel/*
 snapshot_s7/
 **/.env
+code/_shared/_common/db/s3_config.py

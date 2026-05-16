@@ -12,6 +12,8 @@ x-common-env: &common-env-vars
   ACCESS_TOKEN_TTL: 3600
   COMMON_API: http://194.87.131.81:8000
   QUEUEING_ROUTE: queue
+  SECRETS_DIR: /run/secrets
+
 
 networks:
   backend:
@@ -64,6 +66,8 @@ services:
       <<: *common-env-vars
     ports:
       - "7995:7995"
+    secrets:
+      - env
     deploy:
       placement:
         constraints:
@@ -80,6 +84,8 @@ services:
       REPLICA_ID: "{{.Task.Name}}"
       PUBLIC_URL: "http://{{.Node.Hostname}}:7948"
       HOSTNAME: "{{.Node.Hostname}}"
+    secrets:
+      - env
     ports:
       - target: 7948
         published: 7948
@@ -100,6 +106,8 @@ services:
       PUBLIC_URL: "localhost:8000"
     ports:
       - "8000:8000"
+    secrets:
+      - env
     deploy:
       placement:
         constraints:
@@ -123,3 +131,7 @@ services:
 volumes:
   pg_data:
   nats_data:
+
+secrets:
+  env:
+    external: true
