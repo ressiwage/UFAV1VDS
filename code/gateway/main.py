@@ -279,10 +279,16 @@ async def upload_target(
 
     if target_url is None:
         for i in ranked:
-            if i['cpu'] >= CPU_THRESHOLD:
+            if i['cpu'] <= CPU_THRESHOLD:
                 target_url=f"{i['url']}/upload/disk"
 
     if target_url is None:
+        for i in ranked:
+            if i['disk'] >= neccessary_ram:
+                target_url=f"{i['url']}/upload/disk"
+    
+    if target_url is None:
+        raise HTTPException(status_code=503, detail="Недостаточно серверов. все сервера загружены на 100%, не хватает оперативной и дисковой памяти")
         target_url = f"{FALLBACK_QUEUE}/upload"
 
     #TODO: добавить ограничение по диску

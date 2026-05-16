@@ -34,9 +34,14 @@ async def _process_upload(
     payload = await otp_repo.consume_upload_token(token)
     await status_repo.create_video('unknown', payload['archive_id'])
     print('token consumed')
-    file_bytes = await file.read()
-    print('file read')
-    frame_bytes = await video_service.decode_first_frame(file_bytes, in_memory=in_memory)
+
+    if in_memory:
+        file_bytes = await file.read()
+        print('file read (in-memory)')
+        frame_bytes = await video_service.decode_first_frame(file_bytes, in_memory=True)
+    else:
+        frame_bytes = await video_service.decode_first_frame_streaming(file, in_memory=False)
+
     print('decoded')
     js, _ = await js_connect()
     try:
@@ -72,45 +77,3 @@ async def upload_video_disk(
 ):
     return await _process_upload(file, token, otp_repo, video_service, status_repo, in_memory=False)
 
-
-async def _stream_decode(request: Request) :
-    proc = await asyncio.create_subprocess_exec(
-        DAV1D_PATH,
-        "-i", "/dev/stdin",
-        "-o", "/dev/stdout",
-        "--threads", "1",
-        stdin=asyncio.subprocess.PIPE,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.DEVNULL,
-    )
-
-    async def feed_stdin():
-        try:
-            async for chunk in request.stream():
-                print('wc', chunk[:4])
-                proc.stdin.write(chunk)
-                await proc.stdin.drain()
-        except (BrokenPipeError, ConnectionResetError):
-            pass  # dav1d завершился раньше — нормально
-        finally:
-            proc.stdin.close()
-
-    queue: asyncio.Queue[bytes | None] = asyncio.Queue(maxsize=8)
-
-    async def read_stdout():
-        while chunk := await proc.stdout.read(65536):
-            print('wc', chunk[:4])
-            await queue.put(chunk)
-        await queue.put(None)  # sentinel
-
-    feed_task   = asyncio.create_task(feed_stdin())
-    reader_task = asyncio.create_task(read_stdout())
-
-    while True:
-        chunk = await queue.get()
-        if chunk is None:
-            break
-        yield chunk
-
-    await asyncio.gather(feed_task, reader_task)
-    await proc.wait()

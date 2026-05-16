@@ -1,22 +1,4 @@
-# ──────────────────────────────────────────────
-# Stage 1: сборка ffmpeg с libaom-av1
-# ──────────────────────────────────────────────
-FROM debian:bookworm-slim AS ffmpeg-builder
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    cmake \
-    nasm \
-    yasm \
-    git \
-    meson \
-    pkg-config \
-    ca-certificates \
-    ninja-build \
-    curl \
-    python3 \
-    python3-pip \
-    && rm -rf /var/lib/apt/lists/*
 
 
 # ──────────────────────────────────────────────

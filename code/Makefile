@@ -36,8 +36,7 @@ up-swarm:
 	docker pull ghcr.io/ressiwage/decoder-api:latest
 
 delete-unused:
-	docker images -q | xargs docker rmi -f 2>/dev/null
-	docker system prune -af --volumes
+	docker images -q | xargs docker rmi -f 2>/dev/null; docker system prune -af --volumes
 
 deploy: 
 	docker stack deploy -c docker-stack.yml myapp

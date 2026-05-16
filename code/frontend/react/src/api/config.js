@@ -7,7 +7,7 @@ var IPS = {
 }
 
 export const API_BASE = `http://${IPS[env.HOSTNAME]}:7995`;
-export const WS_BASE  = `ws://${IPS[env.HOSTNAME]}:7995/ws/replica`;
+export const WS_BASE  = `ws://${IPS[env.HOSTNAME]}:7995`;
 
 console.log("AB WB", API_BASE, WS_BASE)
 

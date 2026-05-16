@@ -14,14 +14,17 @@ async def report_loop():
     print("создаю хуйню")
     while True:
         try:
+            print(f'регистрирую хуйню {GATEWAY_WS} {REPLICA_ID} {PUBLIC_URL}')
             async with websockets.connect(GATEWAY_WS) as ws:
                 # Регистрация
+                print(f'зарегистрировал хуйню {GATEWAY_WS} {REPLICA_ID} {PUBLIC_URL}')
                 await ws.send(json.dumps({
                     "type": "register",
                     "id": REPLICA_ID,
                     "url": PUBLIC_URL
                 }))
                 while True:
+                    print(f'отправляю хуйню {GATEWAY_WS} {REPLICA_ID} {PUBLIC_URL}')
                     payload = json.dumps({
                         "type": "heartbeat",
                         "id": REPLICA_ID,

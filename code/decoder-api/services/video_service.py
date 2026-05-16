@@ -3,19 +3,20 @@ import os
 import subprocess
 import tempfile
 
-from fastapi import HTTPException
+from fastapi import HTTPException, UploadFile
 from PIL import Image
 
 from core.config import DAV1D_PATH, MAX_CONCURRENT
 
 import asyncio
-import subprocess
 
 semaphore = asyncio.Semaphore(MAX_CONCURRENT)
 
+CHUNK_SIZE = 1024 * 1024  # 1 MB
+
 
 class VideoService:
-    
+
     async def _run(self, *args: str) -> None:
         proc = await asyncio.create_subprocess_exec(
             *args,
@@ -29,14 +30,13 @@ class VideoService:
                 detail=f"dav1d failed: {stderr.decode()}",
             )
 
-    async def decode_first_frame(self, file_bytes: bytes, in_memory: bool=True) -> bytes:
-        TDKWargs: dict = {'dir':'/dev/shm'} if in_memory else dict()
-        with tempfile.TemporaryDirectory(**TDKWargs) as tmpdir:
+    async def decode_first_frame(self, file_bytes: bytes, in_memory: bool = True) -> bytes:
+        tmpdir_kwargs: dict = {'dir': '/dev/shm'} if in_memory else dict()
+        with tempfile.TemporaryDirectory(**tmpdir_kwargs) as tmpdir:
             input_path = os.path.join(tmpdir, "input.obu")
             frame_y4m = os.path.join(tmpdir, "frame.y4m")
 
             with open(input_path, "wb") as f:
-                print(len(file_bytes))
                 f.write(file_bytes)
 
             await self._run(DAV1D_PATH, "-i", input_path, "--threads", "1", "-o", "/dev/null")
@@ -46,27 +46,33 @@ class VideoService:
             )
             return self._y4m_to_jpeg(frame_y4m)
 
-    def _validate(self, input_path: str) -> None:
-        result = subprocess.run(
-            [DAV1D_PATH, "-i", input_path, "-o", "/dev/null"],
-            capture_output=True,
-        )
-        if result.returncode != 0:
-            raise HTTPException(
-                status_code=422,
-                detail=f"dav1d decode failed: {result.stderr.decode()}",
-            )
+    async def decode_first_frame_streaming(self, file: UploadFile, in_memory: bool = False) -> bytes:
+        """
+        Стримим файл чанками на диск, не загружая его целиком в память.
+        in_memory=False → tmpdir на обычном диске (не /dev/shm).
+        """
+        tmpdir_kwargs: dict = {'dir': '/dev/shm'} if in_memory else dict()
+        with tempfile.TemporaryDirectory(**tmpdir_kwargs) as tmpdir:
+            input_path = os.path.join(tmpdir, "input.obu")
+            frame_y4m = os.path.join(tmpdir, "frame.y4m")
 
-    def _decode_first_frame(self, input_path: str, output_path: str) -> None:
-        result = subprocess.run(
-            [DAV1D_PATH, "-i", input_path, "-o", output_path, "--threads", "1", "--limit", "1"],
-            capture_output=True,
-        )
-        if result.returncode != 0:
-            raise HTTPException(
-                status_code=422,
-                detail=f"dav1d first-frame decode failed: {result.stderr.decode()}",
+            # Пишем файл на диск чанками — RAM не растёт
+            with open(input_path, "wb") as f:
+                while True:
+                    chunk = await file.read(CHUNK_SIZE)
+                    if not chunk:
+                        break
+                    f.write(chunk)
+
+            print(f'file streamed to disk: {input_path}')
+
+            await self._run(DAV1D_PATH, "-i", input_path, "--threads", "1", "-o", "/dev/null")
+            await self._run(
+                DAV1D_PATH, "-i", input_path, "-o", frame_y4m,
+                "--threads", "1", "--limit", "1",
             )
+            # _y4m_to_jpeg читает с диска — не держит весь файл в памяти
+            return self._y4m_to_jpeg(frame_y4m)
 
     def _y4m_to_jpeg(self, y4m_path: str, quality: int = 85) -> bytes:
         with open(y4m_path, "rb") as f:
