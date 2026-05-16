@@ -1,6 +1,6 @@
-PATH_38MB_MKV = 'code/tvav.mkv'
+PATH_38MB_MKV = 'code/tvav60.mkv'
 PATH_476MB_MKV='code/tvav2.1.mkv'
-PATH_909MB_MKV='code/tvav60.mkv'
+PATH_909MB_MKV='code/tvav.mkv'
 
 PATH_867_MB='code/tvav.obu'
 PATH_434_MB='code/tvav2.1.obu'
@@ -12,7 +12,7 @@ ITEMS = [
     {'obu':PATH_37_MB, 'mkv':PATH_38MB_MKV}
 ]
 
-GATEWAY_URL = 'http://72.56.39.104:8000'
+GATEWAY_URL = 'http://72.56.39.104:8001'
 
 import requests, os, random, time, threading
 
@@ -28,8 +28,9 @@ def upload_opt(file):
     res = url.json()['url']
     file_status = requests.post(res, files={'file':open(ITEMS[file]['obu'], 'rb')}, headers={'accept': 'application/json'})
     return file_status.text
-
-ACCESS = requests.post(f"{GATEWAY_URL}/login", json={'username':'root', 'password':'root'}).json()['access_token']
+acc_req = requests.post(f"{GATEWAY_URL}/login", json={'username':'root', 'password':'root'})
+print(acc_req, acc_req.text)
+ACCESS = acc_req.json()['access_token']
 rep=f'benchmarks/throughput/REPORT_{random.randint(100, 999)}.md'
 print(f'saving in {rep}')
 def sequential(out, file_index, upload_func):
@@ -93,4 +94,4 @@ def parallel(out, file_index, upload_func, workers=50, iterations=50):
     out.flush()
 
 with open(rep, 'w+') as out:
-    parallel(out, 2, upload_simple)    
+    parallel(out, 2, upload_simple, iterations=2)    
