@@ -7,6 +7,7 @@ from fastapi import HTTPException, UploadFile
 from PIL import Image
 
 from core.config import DAV1D_PATH, MAX_CONCURRENT
+from _shared._common.db.s3 import s3, read_secret
 
 import asyncio
 

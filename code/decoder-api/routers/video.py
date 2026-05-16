@@ -67,7 +67,7 @@ async def upload_video(
     return await _process_upload(file, token, otp_repo, video_service, status_repo, in_memory=True)
 
 
-@router.post("/upload_disk")
+@router.post("/upload/disk")
 async def upload_video_disk(
     file: UploadFile = File(...),
     token: str = Query(...),

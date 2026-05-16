@@ -41,3 +41,6 @@ david_show:
 
 david_show_save:
 	bash code/scripts/david_comp_save.sh code/tvav.obu
+
+throughput_bench:
+	python benchmarks/throughput/bench.py
