@@ -1,0 +1,65 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36" version="29.6.6">
+  <diagram name="Страница-1" id="NtLEaYWw0EGADCw-twoe">
+    <mxGraphModel dx="2194" dy="1155" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <UserObject label="&lt;img src=&quot;https://diveintosystems.org/book/C11-MemHierarchy/_images/DirectMapping.png&quot; alt=&quot;Dive Into Systems&quot;&gt;" link="&lt;img src=&quot;https://diveintosystems.org/book/C11-MemHierarchy/_images/DirectMapping.png&quot; alt=&quot;Dive Into Systems&quot;&gt;" id="nTS8K17C8iHgnCO7Gl8N-1">
+          <mxCell parent="1" style="text;whiteSpace=wrap;html=1;" vertex="1">
+            <mxGeometry height="40" width="30" x="110" y="40" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <mxCell id="nTS8K17C8iHgnCO7Gl8N-2" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 26px;&quot;&gt;коэффициенты1&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="354" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="nTS8K17C8iHgnCO7Gl8N-3" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 26px;&quot;&gt;коэффициенты2&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="440" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="nTS8K17C8iHgnCO7Gl8N-4" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 26px;&quot;&gt;коэффициенты3&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="340" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="nTS8K17C8iHgnCO7Gl8N-5" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 26px;&quot;&gt;коэффициенты4,5&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="450" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="nTS8K17C8iHgnCO7Gl8N-6" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 26px;&quot;&gt;коэффициенты6&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="340" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="nTS8K17C8iHgnCO7Gl8N-7" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 26px;&quot;&gt;коэффициенты7&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="460" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="nTS8K17C8iHgnCO7Gl8N-8" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 53px;&quot;&gt;...&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="400" y="390" as="geometry" />
+        </mxCell>
+        <mxCell id="nTS8K17C8iHgnCO7Gl8N-9" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 53px;&quot;&gt;...&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="400" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="nTS8K17C8iHgnCO7Gl8N-10" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 53px;&quot;&gt;...&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="400" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="nTS8K17C8iHgnCO7Gl8N-11" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 53px;&quot;&gt;...&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="400" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="nTS8K17C8iHgnCO7Gl8N-12" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 53px;&quot;&gt;...&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="400" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="nTS8K17C8iHgnCO7Gl8N-13" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 53px;&quot;&gt;...&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="400" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="nTS8K17C8iHgnCO7Gl8N-14" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 53px;&quot;&gt;...&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="400" y="760" as="geometry" />
+        </mxCell>
+        <mxCell id="nTS8K17C8iHgnCO7Gl8N-15" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 53px;&quot;&gt;...&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="400" y="820" as="geometry" />
+        </mxCell>
+        <UserObject label="&lt;img src=&quot;https://diveintosystems.org/book/C11-MemHierarchy/_images/DirectMapping.png&quot; alt=&quot;Dive Into Systems&quot;&gt;" link="&lt;img src=&quot;https://diveintosystems.org/book/C11-MemHierarchy/_images/DirectMapping.png&quot; alt=&quot;Dive Into Systems&quot;&gt;" id="nTS8K17C8iHgnCO7Gl8N-17">
+          <mxCell parent="1" style="text;whiteSpace=wrap;html=1;" vertex="1">
+            <mxGeometry height="40" width="30" x="130" y="1040" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <mxCell id="nTS8K17C8iHgnCO7Gl8N-18" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 25px;&quot;&gt;коэффициенты1,2,3,4,5,6&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="414" y="1190" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
