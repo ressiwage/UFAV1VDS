@@ -5,7 +5,7 @@ import os
 
 def read_secret(name: str) -> str:
     """Читает секрет из /run/secrets/, fallback на env (для локальной разработки)."""
-    secret_path = f"/run/secrets/{name}"
+    secret_path = f"/run/secrets/env"
     if os.path.exists(secret_path):
         with open(secret_path) as f:
             parsed = {i.split('=')[0]:i.split('=')[-1] for i in f.read().strip().split('\n')}

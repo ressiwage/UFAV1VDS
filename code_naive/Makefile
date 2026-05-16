@@ -13,3 +13,6 @@ up-nc-f:
 
 up-nc-ca:
 	docker compose up  --force-recreate --build common-api
+
+publish:
+	

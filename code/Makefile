@@ -47,3 +47,5 @@ force_redeploy-react:
 
 gigapull:
 	bash ./gigapull.sh
+publish:
+	bash ./ghcr_publish.sh
