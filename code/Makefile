@@ -41,7 +41,7 @@ delete-unused:
 deploy: 
 	docker stack deploy -c docker-stack.yml myapp
 force-redeploy:
-	bash ./ghcr_hard_redresh.sh
+	bash ./ghcr_hard_refresh.sh
 force_redeploy-react:
 	docker service update --force --image ghcr.io/ressiwage/frontend:latest myapp_frontend
 

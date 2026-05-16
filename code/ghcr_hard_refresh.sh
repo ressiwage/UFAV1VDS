@@ -5,7 +5,7 @@ REGISTRY="ghcr.io/ressiwage"
 STACK="myapp"
 
 SERVICES=(
-  "frontend:frontend/react/:frontend"
+  "frontend:frontend/react/:frontend/react/"
   "common-api:.:common-api"
   "gateway:.:gateway"
   "decoder-api:.:decoder-api"
