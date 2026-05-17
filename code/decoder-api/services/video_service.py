@@ -2,15 +2,13 @@ import io
 import os
 import subprocess
 import tempfile
+import asyncio, aiofiles
 
 from fastapi import HTTPException, UploadFile
 from PIL import Image
 
 from core.config import DAV1D_PATH, MAX_CONCURRENT
 from _shared._common.db.s3 import s3, read_secret
-
-import asyncio
-
 semaphore = asyncio.Semaphore(MAX_CONCURRENT)
 
 CHUNK_SIZE = 1024 * 1024  # 1 MB
@@ -18,63 +16,85 @@ CHUNK_SIZE = 1024 * 1024  # 1 MB
 
 class VideoService:
 
-    async def _run(self, *args: str) -> None:
+    async def _run_ffmpeg(self, input_obu_path: str, output_mp4_path: str) -> None:
+        """Двухэтапный вариант: dav1d -> y4m (на диск) -> ffmpeg (scale + h264)"""
+        y4m_path = input_obu_path.replace(".obu", ".y4m")
+
+        # 1. Dav1d декодирует в y4m
+        await self._run(
+            DAV1D_PATH, 
+            "-i", input_obu_path,
+            "-o", y4m_path,
+            "--threads", "1"
+        )
+
+        # 2. Ffmpeg ресайзит и кодирует
         proc = await asyncio.create_subprocess_exec(
-            *args,
+            "ffmpeg",
+            "-i", y4m_path,
+            "-vf", "scale=-2:64:flags=bicubic",
+            "-c:v", "libx264",
+            "-preset", "veryfast",
+            "-crf", "23",
+            "-pix_fmt", "yuv420p",
+            "-an",
+            "-y",
+            output_mp4_path,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
+
         _, stderr = await proc.communicate()
+
         if proc.returncode != 0:
             raise HTTPException(
                 status_code=422,
-                detail=f"dav1d failed: {stderr.decode()}",
+                detail=f"ffmpeg failed: {stderr.decode(errors='replace')}"
             )
 
+        # Опционально: удаляем y4m после использования
+        try:
+            os.unlink(y4m_path)
+        except:
+            pass
+
     async def decode_first_frame(self, file_bytes: bytes, in_memory: bool = True) -> bytes:
-        tmpdir_kwargs: dict = {'dir': '/dev/shm'} if in_memory else dict()
+        tmpdir_kwargs = {'dir': '/dev/shm'} if in_memory else {}
         with tempfile.TemporaryDirectory(**tmpdir_kwargs) as tmpdir:
             input_path = os.path.join(tmpdir, "input.obu")
-            frame_y4m = os.path.join(tmpdir, "frame.y4m")
+            output_path = os.path.join(tmpdir, "output_64.mp4")
 
             with open(input_path, "wb") as f:
                 f.write(file_bytes)
 
-            await self._run(DAV1D_PATH, "-i", input_path, "--threads", "1", "-o", "/dev/null")
-            await self._run(
-                DAV1D_PATH, "-i", input_path, "-o", frame_y4m,
-                "--threads", "1", "--limit", "1",
+            await self._run_ffmpeg(
+                [DAV1D_PATH, "-i", input_path, "--threads", "1", "-o", "-"],
+                output_path
             )
-            return self._y4m_to_jpeg(frame_y4m)
+
+            with open(output_path, "rb") as f:
+                return f.read()
 
     async def decode_first_frame_streaming(self, file: UploadFile, in_memory: bool = False) -> bytes:
-        """
-        Стримим файл чанками на диск, не загружая его целиком в память.
-        in_memory=False → tmpdir на обычном диске (не /dev/shm).
-        """
-        tmpdir_kwargs: dict = {'dir': '/dev/shm'} if in_memory else dict()
+        tmpdir_kwargs = {'dir': '/dev/shm'} if in_memory else {}
         with tempfile.TemporaryDirectory(**tmpdir_kwargs) as tmpdir:
             input_path = os.path.join(tmpdir, "input.obu")
-            frame_y4m = os.path.join(tmpdir, "frame.y4m")
+            output_path = os.path.join(tmpdir, "output_64.mp4")
 
-            # Пишем файл на диск чанками — RAM не растёт
-            with open(input_path, "wb") as f:
+            async with aiofiles.open(input_path, "wb") as f:   # рекомендуется aiofiles
                 while True:
                     chunk = await file.read(CHUNK_SIZE)
                     if not chunk:
                         break
-                    f.write(chunk)
+                    await f.write(chunk)
 
-            print(f'file streamed to disk: {input_path}')
-
-            await self._run(DAV1D_PATH, "-i", input_path, "--threads", "1", "-o", "/dev/null")
-            await self._run(
-                DAV1D_PATH, "-i", input_path, "-o", frame_y4m,
-                "--threads", "1", "--limit", "1",
+            await self._run_ffmpeg(
+                [DAV1D_PATH, "-i", input_path, "--threads", "1", "-o", "-"],
+                output_path
             )
-            # _y4m_to_jpeg читает с диска — не держит весь файл в памяти
-            return self._y4m_to_jpeg(frame_y4m)
 
+            with open(output_path, "rb") as f:
+                return f.read()
     def _y4m_to_jpeg(self, y4m_path: str, quality: int = 85) -> bytes:
         with open(y4m_path, "rb") as f:
             raw = f.read()

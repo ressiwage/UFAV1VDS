@@ -9,10 +9,10 @@
 # ---------------------------------------------------------------------------
 # Настройки — поправьте под свою среду
 # ---------------------------------------------------------------------------
-OBU_FILE="${1:-/path/to/reference.obu}"   # эталонный OBU (можно передать аргументом)
+OBU_FILE="code/tvav2.1.obu"   # эталонный OBU (можно передать аргументом)
 DAV1D_BIN="code/decoder/build/tools/dav1d"               # путь к экзешнику dav1d
-ORIG_VIDEO="code/tvav.obu"       # оригинальное 30-минутное видео
-DECODED_RAW="code/test/decoded_dav1d.y4m"     # выходной y4m от dav1d
+ORIG_VIDEO="code/tvav2.1.obu"       # оригинальное 30-минутное видео
+DECODED_RAW="code/test/decoded_raw.y4m"     # выходной y4m от dav1d
 DECODED_CLIP="code/test/decoded_5min.mp4"     # обрезанный декодированный клип
 ORIG_CLIP="code/test/original_5min.mp4"       # обрезанный оригинальный клип
 CLIP_DURATION=300                        # 5 минут в секундах
@@ -53,17 +53,17 @@ decode_obu() {
 # ---------------------------------------------------------------------------
 trim_clips() {
     info "Нарезаю первые ${CLIP_DURATION}с из оригинала..."
-    ffmpeg -y -i "$ORIG_VIDEO" \
+    ffmpeg -y -c:v libaom-av1 -i "$ORIG_VIDEO" \
         -t "$CLIP_DURATION" \
-        -c:v libx264 -crf 18 -preset fast \
+        -c:v h264  \
         -an "$ORIG_CLIP" \
         -loglevel warning
     ok "Оригинальный клип → $ORIG_CLIP"
 
     info "Нарезаю первые ${CLIP_DURATION}с из декодированного y4m..."
-    ffmpeg -y -i "$DECODED_RAW" \
+    ffmpeg -y  -i "$DECODED_RAW" \
         -t "$CLIP_DURATION" \
-        -c:v libx264 -crf 18 -preset fast \
+        -c:v h264  \
         -an "$DECODED_CLIP" \
         -loglevel warning
     ok "Декодированный клип → $DECODED_CLIP"

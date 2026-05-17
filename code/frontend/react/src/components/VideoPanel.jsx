@@ -114,6 +114,7 @@ export function VideoPanel({ token, username, onLogout, videoRepo }) {
         <div style={{ marginBottom: 20 }}>
           <p style={{ margin: "0 0 8px", fontSize: 11, color: "#555", letterSpacing: "0.1em", textTransform: "uppercase" }}>Last Frame</p>
           <img src={frame} alt="Last frame" style={{ width: "100%", borderRadius: 8, border: "1px solid #1e1e1e", display: "block" }} />
+          <video src={{frame}}>video</video>
         </div>
       )}
 

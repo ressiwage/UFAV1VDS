@@ -37,10 +37,16 @@ david_perfproff:
     code/decoder/build/tools/dav1d -i code/tvav.obu --limit 1000 -o /dev/null --threads 1;
 
 david_show:
-	bash code/scripts/david_compare.sh code/tvav.obu
+	bash code/scripts/david_compare.sh code/tvav2.1.obu
 
 david_show_save:
 	bash code/scripts/david_comp_save.sh code/tvav.obu
 
 throughput_bench:
 	python benchmarks/throughput/bench.py
+
+psnr:
+	python benchmarks/quality/psnr.py code/test/original_5min.mp4 code/test/decoded_5min.mp4 --video --frames 1000
+
+framewise_luma:
+	python benchmarks/quality/framewise_luma.py code/test/original_5min.mp4 code/test/decoded_5min.mp4 --output result.png

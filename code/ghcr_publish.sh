@@ -4,26 +4,26 @@ set -e  # остановить выполнение при любой ошибк
 # ================= НАСТРОЙКИ (меняйте под себя) =================
 # Полные имена образов с тегами
 IMAGES=(
-    "ghcr.io/ressiwage/frontend:latest"
+    # "ghcr.io/ressiwage/frontend:latest"
     "ghcr.io/ressiwage/decoder-api:latest"
-    "ghcr.io/ressiwage/gateway:latest"
-    "ghcr.io/ressiwage/common-api:latest"
+    # "ghcr.io/ressiwage/gateway:latest"
+    # "ghcr.io/ressiwage/common-api:latest"
 )
 
 # Пути к Dockerfile (пустая строка → используется Dockerfile по умолчанию)
 DOCKERFILES=(
-    ""                           # для frontend используем Dockerfile в контексте
+    # ""                           # для frontend используем Dockerfile в контексте
     "decoder-api/Dockerfile"
-    "gateway/Dockerfile"
-    "common-api/Dockerfile"
+    # "gateway/Dockerfile"
+    # "common-api/Dockerfile"
 )
 
 # Контексты сборки (папки или текущая директория ".")
 CONTEXTS=(
-    "frontend/react/"
+    # "frontend/react/"
     "."
-    "."
-    "."
+    # "."
+    # "."
 )
 # ================================================================
 

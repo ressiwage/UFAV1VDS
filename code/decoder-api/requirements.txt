@@ -12,3 +12,4 @@ asyncpg==0.31.0
 httpx
 pillow
 boto3
+aiofiles
