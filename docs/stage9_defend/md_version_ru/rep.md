@@ -1,0 +1,1033 @@
+|  |  |
+| --- | --- |
+| Пермский филиал федерального государственного автономного  образовательного учреждения высшего образования  «Национальный исследовательский университет  «Высшая школа экономики» | |
+| Факультет социально-экономических и компьютерных наук | |
+| Берсенёв Илья Иванович | |
+| **Разработка системы для быстрого декодирования видео в формате AV1** | |
+| *Выпускная квалификационная работа  бакалавра по направлению 09.03.04 Программная инженерия* | |
+|  |  |
+| Руководитель  Старший преподаватель кафедры информационных технологий в бизнесе Ланин Вячеслав Владимирович |
+| Пермь 2026 | |
+
+**АННОТАЦИЯ**
+
+Берсенёв Илья Иванович, Разработка системы для быстрого декодирования видео в формате AV1 : исследовательская работа бакалавра 09.03.04 программная инженерия / Берсенёв Илья Иванович. – Пермь: НИУ ВШЭ – Пермь, 2025. 69 с.
+
+Работа посвящена реализации информационной системы для ускорения декодирования видеофайлов, представленных в формате AV1.
+
+Во «Введении» обосновывается актуальность данной работы, ставятся цель проекта и задачи. В первой главе приведены результаты анализа предметной области, в частности обзору стандарта AV1 Bitstream & Decoding Process Specification v1.0.0-errata и его реализации в существующем видеодекодере Dav1d. Глава заканчивается анализом требований к данной системе. Во второй главе представлены результаты проектирования данной системы. Выполнено проектирование системы в общем и отдельных её компонентов в частности. Задачи проектирования решены на основе объектно-ориентированного подхода, при построении моделей использован язык UML. Третья глава описывает процесс реализации системы и оптимизации видеодекодера Dav1d с указанием результатов оптимизации. В «Заключении» описаны сделанные выводы и результаты работы.
+
+Работа содержит 55 страниц основного текста, 6 таблиц, 37 рисунков. Библиографический список включает 27 наименований. Работа включает 5 приложений.
+
+**ОГЛАВЛЕНИЕ**
+
+[Введение 5](#_Toc230170340)
+
+[1. Анализ спецификации av1 и технических средств повышения производительности 7](#_Toc230170341)
+
+[1.1. Обоснование актуальности и вывод первичных требований 7](#_Toc230170342)
+
+[1.2. Анализ текущего бизнес-процесса декодирования видео 8](#_Toc230170343)
+
+[1.3. Анализ существующих решений 8](#_Toc230170344)
+
+[1.4. Выделение функциональных требований 9](#_Toc230170345)
+
+[1.5. Определение вариантов использования системы 9](#_Toc230170346)
+
+[1.6. Выделение нефункциональных требований 10](#_Toc230170347)
+
+[1.7. Анализ стандарта AV1-v1.0.0errata 10](#_Toc230170348)
+
+[1.7.1. Сравнение с стандартом ITU-T H.264 11](#_Toc230170349)
+
+[1.7.2. Intra декодирование 13](#_Toc230170350)
+
+[1.7.3. Inter декодирование 17](#_Toc230170351)
+
+[1.7.4. Результаты анализа стандарта AV1 17](#_Toc230170352)
+
+[1.8. Анализ методов оптимизации кода 18](#_Toc230170353)
+
+[1.8.1. Правила Бентли 18](#_Toc230170354)
+
+[1.8.2. Оптимизация CPU-кеша 20](#_Toc230170355)
+
+[1.9. Анализ существующей инфраструктуры 20](#_Toc230170356)
+
+[1.10. Анализ технологического стека 23](#_Toc230170357)
+
+[1.10.1. Веб-сервер 23](#_Toc230170358)
+
+[1.10.2. Оркестрация 23](#_Toc230170359)
+
+[1.10.3. Базы данных 23](#_Toc230170360)
+
+[1.10.4. Брокер сообщений 24](#_Toc230170361)
+
+[1.10.5. Фронтенд 24](#_Toc230170362)
+
+[1.11. Результаты анализа объекта автоматизации 24](#_Toc230170363)
+
+[2. Проектирование 26](#_Toc230170364)
+
+[2.1. Проектирование наивной реализации системы 26](#_Toc230170365)
+
+[2.1.1. Проектирование базы данных 28](#_Toc230170366)
+
+[2.2. Проектирование оптимизированной реализации системы 28](#_Toc230170367)
+
+[2.2.1. Проектирование реляционной базы данных 32](#_Toc230170368)
+
+[2.2.2. Проектирование бэкенда 33](#_Toc230170369)
+
+[2.2.3. Проектирование фронтенда 38](#_Toc230170370)
+
+[2.2.4. Проектирование оптимизаций Dav1d 39](#_Toc230170371)
+
+[2.3. Выводы 42](#_Toc230170372)
+
+[3. Реализация 44](#_Toc230170373)
+
+[3.1. Оптимизации DAV1D 44](#_Toc230170374)
+
+[3.1.1. CDEF, Loop filter (DF) 44](#_Toc230170375)
+
+[3.1.2. Интерполяция 45](#_Toc230170376)
+
+[3.1.3. Оптимизация обратных трансформаций 49](#_Toc230170377)
+
+[3.1.4. Оптимизация реконструкции изображения 49](#_Toc230170378)
+
+[3.1.5. Выводы 50](#_Toc230170379)
+
+[3.2. Финальная система 51](#_Toc230170380)
+
+[3.2.1. Реализация наивной системы 51](#_Toc230170381)
+
+[3.2.2. Реализация оптимизированной системы 54](#_Toc230170382)
+
+[3.3. Тестирование 56](#_Toc230170383)
+
+[3.3.1. Общая задержка от начала отправки видео на сервер до полного декодирования 57](#_Toc230170384)
+
+[3.3.2. Минимальное время декодирования видео без учета времени передачи 57](#_Toc230170385)
+
+[3.3.3. Покадровая метрика потери качества видео 57](#_Toc230170386)
+
+[3.3.4. Покадровая метрика PSNR 58](#_Toc230170387)
+
+[3.3.5. Нагрузочное тестирование 59](#_Toc230170388)
+
+[3.4. Исходный код 59](#_Toc230170389)
+
+[Заключение 60](#_Toc230170390)
+
+[Глоссарий 61](#_Toc230170391)
+
+[Библиографический список 62](#_Toc230170392)
+
+# Введение
+
+Индустрия кодирования видео является технически сложной областью, демонстрирующей впечатляющие результаты. Например, видеокодек H.264, чья первая версия стандарта была выпущена в 2003 году, демонстрирует снижение веса видео в 50-500 раз в сравнении с полным отсутствием сжатия видео [9].
+
+Такая внушительная эффективность достигается благодаря тщательно продуманным стандартам с учетом архитектуры современных процессоров, математическим оптимизациям в области линейной алгебры, технологии кодирования motion vectors и способам предсказаний следующих кадров, и с каждым новым стандартом кодека эффективность лишь повышается.
+
+Однако у такой высокой эффективности сжатия существует и обратная сторона, которая заключается в том, что с повышением уровня сжатия также повышается и необходимая процессорная нагрузка для декодирования файла.
+
+Представленная выпускная квалификационная работа посвящена решению актуальной бизнес-задачи для компании ООО «КОМЭКСП» (https://comexp.net/). Основной продукт данной компании – запатентованный индексатор видео TAPe, который позволяет осуществлять поиск видео по его фрагменту. Проблема заключается в том, что TAPe работает значительно быстрее любого видеодекодера. Так, например, декодирование получасового фрагмента видеофильма занимает десять минут [25], а его индексирование происходит за десять секунд, в результате чего индексация видео занимает менее процента от общего времени работы системы.
+
+Ввиду вышеперечисленных обстоятельств было принято решение разработать систему, чтобы максимально уменьшить простой индексатора относительно AV1 видео.
+
+Данная работа выполняется в следующих условиях: процессор AMD EPYC 7502, SSD, однопоточный режим видеодекодирования, выходное разрешение 64px\*64px пропорционально входному. Данный выбор обусловлен тем, что однопоточные оптимизации легче переносить на другие среды выполнения, они являются легковесными и могут запускаться на клиенте, а также потребляют меньше процессорных ресурсов чем многопоточная среда. NVIDIA CUDA не использована, так как её реализация будет выполнена в будущем и будет основываться на оптимизациях в текущей работе. Сверхнизкое выходное разрешение обусловлено особенностями работы TAPe, о чем более подробно упомянуто в первой главе.
+
+**Объект исследования** – процесс декодирования видео в формате AV1.
+
+**Предмет исследования** – оптимизированная система декодирования видео в формате AV1.
+
+**Цель исследования** – разработать и применить оптимизации видеодекодера AV1 для выходного разрешения 64px, спроектировать архитектуру системы декодирования с учетом максимальной производительности.
+
+Для достижения указанной цели необходимо решить следующие задачи:
+
+1. Выполнить анализ предметной области и на основе методов оптимизации ПО разработать требования к системе декодирования видео в формате AV1.
+2. Выполнить проектирование архитектуры системы согласно требованиям для максимальной производительности.
+3. Выполнить проектирование алгоритмов оптимизации видеодекодирования AV1.
+4. Выполнить программную реализацию системы, позволяющей декодировать AV1 видео, выполнить тестирование с целью оценки производительности.
+5. Выполнить развертывание системы.
+
+Практическая значимость данной работы заключается в сокращении времени декодирования видео, что уменьшит время простоя индексатора TAPe, увеличит быстродействие системы и удешевит масштабирование продуктов, основанных на TAPe. На рынке не выявлены существующие решения, оптимизированные для декодирования видео в низком выходном формате
+
+1. Анализ спецификации av1 и технических средств повышения производительности
+
+В ходе анализа должны быть решены следующие задачи:
+
+1. Поиск потенциальных узких мест в стандарте Errata
+2. Анализ методов оптимизации кода с целью их дальнейшего использования
+3. Выбор оптимального технического стека для реализации системы
+4. Определение функциональных и нефункциональных требований к системе
+5. Формирование технического задания
+   1. Обоснование актуальности и вывод первичных требований
+
+Компания «ООО КОМЭКСП», ради которой выполняется работа, оказывает услуги по поиску видео по видео с помощью технологии индексации TAPe. TAPe принимает на вход кадры видео, а на выходе выдает «индекс» видео, представляющий собой сжатый набор черт по которым видео можно отличать друг от друга и присваивать им индекс «похожести», именуемый T-индексом.
+
+Сам процесс индексации происходит относительно быстро и ограничен по большей части скоростью чтения данных, однако декодирование видео с целью получения кадров из потока байтов происходит сильно медленнее. Например, индексация фильма «The Fate of the Furious» весом в 3 гигабайта в разрешении 1920 \* 1080 занимает 10 секунд, а его декодирование стандартным видеодекодером libaom – 247 секунд.
+
+Из вышесказанного следует, что имеет смысл оптимизировать именно процесс передачи видео на сервер и его последующее декодирование, так как он является «бутылочным горлышком» для всего процесса индексации.
+
+Таким образом, к системе можно предъявить два важных первичных требования: возможность параллельно обрабатывать множество запросов, а также максимально сократить время, которое необходимо для того чтобы передать видео на сервер и декодировать его.
+
+Система будет использовать видеодекодер Dav1d для декодирования AV1 видео и он должен быть собран под архитектуру generic. Это значит, что в нем не будут использоваться процессор-специфичные оптимизации вроде SIMD, AVX, SSE2 для облегчения дальнейшего портирования. Также не будет использоваться Nvidia CUDA ввиду того, что в данной работе первостепенной целью является алгоритмическая оптимизация, а не «железная».
+
+При этом неважно качество работы системы на видео высокого разрешения, TAPe одинаково хорошо работает для видео 128\*128 и для видео 1920\*1920, так что оптимизации будут проводиться с потерей качества.
+
+* 1. Анализ текущего бизнес-процесса декодирования видео
+
+Текущий бизнес-процесс декодирования видео представлен в приложении Г и представляет собой последовательную авторизацию, загрузку видео на сервер внешнего API, затем его индексацию внутренним API. Внутреннее и внешнее API располагаются на одном сервере, что уменьшает сетевую задержку.
+
+Как видно из схемы, внешнее API сохраняет видеофайл на сервер, а затем передаёт внутреннему API путь до этого файла, так как оба API находятся на одном сервере. После этого внутреннее API индексирует файл, сохраняет его и возвращает ответ.
+
+Внешнее API представляет собой высокоуровневое API, предназначенное для взаимодействия с бизнес-сущностями, представленными таблицами в базе данных. Внутреннее API закрыто для доступа извне и предназначено только для TAPe операций: поиск, индексация, сравнение и т.д.
+
+Недостаток существующего решения в том, что оно крайне плохо поддаётся масштабированию: внутреннее API принимает на вход не файл, а его путь на сервере, оба API запущены в единственных экземплярах, для декодирования видео используется медленная референсная имплементация AV1 декодера libaom.
+
+Наиболее ресурсоёмким местом является декодирование видео, что обозначено на схеме.
+
+* 1. Анализ существующих решений
+
+Система имеет в требованиях возможность полного декодирования видео в формате AV1 как можно быстрее, притом необязательно чтобы видео в высоком разрешении имело высокое выходное качество. Из этих двух требований следует что не может быть аналогов данной системы (по крайней мере, в открытом доступе) ввиду того, что пользователям в абсолютном большинстве случаев не нужно декодировать всё видео сразу, так как большинство видеодекодеров поддерживают потоковое и покадровое декодирование. Ситуация осложняется тем, что к каждому из видеодекодеров необходимо подбирать свой метод оптимизации, что достаточно трудоемко.
+
+Ввиду вышеперечисленного в данном разделе представлен анализ существующих видеокодеков для видео в формате AV1 с их сравнительными характеристиками в таблице 1. Тестирование проведено с учётом generic архитектуры, без использования SIMD на получасовом видео, с использованием процессора intel i5-12400f в однопоточном режиме. Код для воспроизведения доступен в репозитории https://github.com/ressiwage/AV1-bench.
+
+Таблица 1 – сравнительный анализ видеодекодеров [25]
+
+|  |  |  |
+| --- | --- | --- |
+| Видеодекодер | Скорость декодирования получасового видео, в секундах | Язык реализации |
+| libaom | 679.788 | C |
+| Dav1d | 374.877 | С |
+| Rav1d | 555.763 | Rust, C |
+
+Ввиду вышеперечисленных факторов в качестве видеодекодера был выбран Dav1d. Он предоставляет значительно большую скорость декодирования в отличие от референсной имплементации libaom и своего порта на языке Rust Rav1d.
+
+* 1. Выделение функциональных требований
+
+Для системы быстрого декодирования видео в формате AV1 были сформулированы функциональные требования:
+
+* Система должна декодировать видео в формате AV1
+* Система должна иметь возможность загрузки видео пользователем
+* Система должна хранить метаданные о загруженных видеофайлах и статусах задач в реляционной базе данных.
+* Система должна уведомлять пользователя о завершении задачи декодирования посредством протокола WebSocket.
+  1. Определение вариантов использования системы
+
+Система будет иметь единственное предназначение, возможность провести видео через процесс «загрузка-декодирование» максимально быстро. Для этого процесса также необходима авторизация для идентификации пользователя. В приложении А представлена диаграмма прецедентов (вариантов использования) системы. На ней представлены существующие системы ComExp, для которых необходимо наличие декодированных файлов, а также рассматриваемой системы. В диаграмме представлены 4 сценария использования: зарегистрироваться, аутентифицироваться, отправить видео для декодирования и получить декодированное видео. На основе диаграммы для ключевого варианта использования «загрузка-декодирование» в приложении Б приведена диаграмма последовательностей, детализирующая взаимодействие объектов.
+
+Имеет необходимость пояснить термин «obu» в данной диаграмме: согласно AV1-v1.0.0errata obu расшифровывается как open bitstream unit и является неким блоком, из которых состоит видео. Тут, однако, имеется файл с расширением .obu, коим является видеодорожка, отделенная от аудио. Это одна из оптимизаций, которая будет объяснена и применена в главах 2 и 3.
+
+* 1. Выделение нефункциональных требований
+
+Для системы быстрого декодирования видео в формате AV1 были сформулированы нефункциональные требования:
+
+* Нагрузка при обработке нескольких запросов должна линейно масштабироваться при превышении загруженности процессорных мощностей чтобы снизить задержки.
+* Декодер AV1 должен быть собран под архитектуру generic и не использовать Nvidia CUDA.
+* Оптимизированная система должна проходить путь загрузка-декодирование быстрее наивной реализации (см. главу 2) не менее чем на 20%.
+* Оптимизированный видеодекодер должен декодировать видео быстрее чем его неоптимизированная реализация не менее чем на 30%.
+  1. Анализ стандарта AV1-v1.0.0errata
+
+В данной главе представлено описание стандарта Errata с целью выявления потенциальных узких мест для оптимизации. Также использовано сравнение с стандартом ITU-T H.264 для более наглядного объяснения, так как методы в последнем во многом служат опорой для Errata, однако более просты в понимании.
+
+### Сравнение с стандартом ITU-T H.264
+
+Несмотря на то, что один из старейших стандартов кодека для H.264, появившийся в 2003 году, вышел раньше первого стандарта для AV1 на 15 лет (первая версия стандарта AV1 была опубликована в 2018 году), эти стандарты имеют много схожих черт, которые рассмотрены в данной главе.
+
+В приложении В представлена базовая высокоуровневая схема декодирования по стандарту H.264. На нем можно увидеть, что декодирование может быть цикличным ввиду того, что некоторые кадры используют ранее декодированные кадры при реконструкции, а также что данные проходят через несколько развилок – способов предсказания [10].
+
+Способы предсказания делятся на две важные категории: Intra предсказание и Inter предсказание. Первый метод – внутрикадровое предсказание, второе – межкадровое.
+
+Также как в ITU-T H.264, в AV1-v1.0.0errata сохранилось intra предсказание, но стало более комплексным. В H.264 направление intra предсказания ограничено девятью углами от 216 градусов до 18 (см. рис.1,2) и действует в рамках макроблоков (см. раздел 1.7.2), в AV1 базовые концепты Intra предсказания сохраняются но действуют рекурсивно в рамках объединений макроблоков размерности 8\*8, которые разбиваются внутри себя на блоки размерности 4\*2. Эта оптимизация улучшает качество изображения и обеспечивает лучшую многопоточную производительность ввиду независимости 8\*8 блоков но замедляет скорость декодирования.
+
+![](a5821714.png)
+
+Рисунок 1 – intra углы [18]
+
+![The nine intra prediction modes of the H264 standard [24], increased in...  | Download Scientific Diagram](data:image/png;base64,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)
+
+Рисунок 2 – intra предсказание [19]
+
+Касательно Inter предсказания – в H.264 этот способ работает так: существуют фреймы, являющиеся по сути кадрами видео. Фреймы делятся на несколько категорий, наиболее часто встречающимися являются *I*, *P*, *B* фреймы. *I*-фреймы независимо закодированы только intra методом, *P*-фреймы закодированы как разность motion-векторов (см. раздел 1.7.3) с предыдущим кадром, *B*-фреймы закодированы как разность motion-векторов с предыдущим и следующим кадром. AV1 не отделяет *I*-фреймы от *B*, *P*-фреймов, кодируя отдельный фрейм обоими способами, использует сильно более сложные методы предсказания и имеет новый вид фреймов – golden frame. Этот фрейм содержит в себе изображение высокого качества и часто используется для реконструкции. Также в AV1 вводится понятие суперфреймов, содержащих в себе несколько других фреймов, а один кадр может ссылаться не на 1-2 фрейма как в H.264, а иметь древовидную и комплексную структуру ссылок до 8 кадров, где каждому кадру соответствует временной слой (см. рис. 3, 4).
+
+![](f44b0370.png)
+
+Рисунок 3 – мультиреференсные кадры в intra-предсказании [11]
+
+![](90e3b64f.png)
+
+Рисунок 4 – референсная система в H.264 [16]
+
+### Intra декодирование
+
+Как уже было сказано, предсказания в кодеках делятся на 2 вида. В этой главе будут рассмотрены методы внутрикадрового предсказания.
+
+* + 1. Макроблоки
+
+В стандарте ITU-T H.264 макроблоками называются массивы luma пикселей 16\*16 и соответствующие им массивы Cb, Cr пикселей. Luma в данном случае означает яркость, Cb и Cr – цветовые компоненты синего и красного оттенков в формате YCbCr (Chroma-Luma). Макроблок – объект, которым оперирует inter или intra предсказание, а также множественные методы реконструирования и энтропийного декодирования.
+
+В стандарте AV1-v1.0.0errata макроблоки заменяются суперблоками, однако общие принципы остаются теми же за исключением того что размерность суперблоков – 64\*64.
+
+* + 1. Интерполяция
+
+Интерполяция по своей сути в AV1-v1.0.0errata похожа на ту, что была в ITU-T H.264.
+
+При расчете смещения пикселей с вычислением motion vectors может оказаться так, что смещение будет не на натуральное число пикселей, а на вещественное, и в этом случае результирующий пиксель рассчитывается как взвешенная сумма окружающих его пикселей. На рис. 5 представлен фрагмент из стандарта ITU-T H.264, поясняющий как именно вычислять интерполированный пиксель. Так, например, для пикселя в позиции b результирующее значение будет вычислено по формуле 1, а результирующее значение h – по формуле 2.
+
+(E – 5\*F + 20\*G + 20\*H - 5\*I + J)/32 (1)
+
+Где E, F, G, H, I, J – значения соответствующих пикселей, представленных на рис. 5
+
+(A − 5 \* C + 20 \* G + 20 \* M − 5 \* R + T)/32. (2)
+
+Где A, C, G, M, R, T – значения соответствующих пикселей, представленных на рис.5
+
+![](fc3f3123.png)
+
+Рисунок 5 – пояснение к методу вычисления интерполяции [17]
+
+Данное вычисление крайне тяжелое и массово, даже при максимальных оптимизациях с сохранением логики будет потреблять огромное количество процессорных тактов ввиду того, что даже для вычисления интерполяции всего лишь в одной плоскости понадобится минимум **22 такта** на x86 процессоре (не считая simd оптимизаций) [27]. Кроме 6-tap фильтра, описанного выше, существует обычная билинейная интерполяция и выбор первого или второго зависит от закодированной точности пикселя.
+
+В стандарте AV1 интерполяция реализована похоже, однако коэффициенты (-1, 5, 10) динамические и закодированы в видео, притом всего вариантов коэффициентов 96 – по 16 на каждый метод интерполяции. В их числе обычная интерполяция, резкая, плавная и пр. Также в AV1 выше точность интерполяции и помимо 6-tap и билинейной интерполяции существуют 4-tap и 8-tap фильтры. Данная реализация на порядок «дороже» реализации H.264.
+
+Данный тезис подтверждается статьёй [3], показывая связь интерполяции с остальными операциями. В статье говорится о том, что по сравнению с прямым предшественником AV1, VP9, её точность изменилась с 1/8 до 1/64. Это означает, что для расчёта одного пикселя с помощью 8-tap фильтра необходимо загрузить из памяти 8 пикселей и 8 коэффициентов, всего различных наборов коэффициентов – 96. Недостаток статьи в том, что она сосредоточена на кодировании, а не декодировании видео.
+
+* + 1. Энтропийное кодирование
+
+В декодерах-наследниках MPEG (к коим относятся рассматриваемые AV1 и H.264) также присутствуют методы сжатия путем энтропийного кодирования вроде DCT, ADST, FLIPADST, IDTX. Не вдаваясь в детали, это методы кодирования, при котором видеодекодер берет из потока байтов 2 коэффициента которые являются натуральными числами от 0 до 7, а затем переводит их в частоты через функцию косинуса (для discrete cosine transform). Так, например, из коэффициентов (0,0) будет восстановлена однородно-серая текстура, из (1,0) – горизонтальный градиент, из (7,7) – мелкую сетку. Это позволяет сильно сэкономить занимаемое место и время декодирования, так как методы декодирования сильно оптимизированы даже в виде нативного кода на си.
+
+* + 1. CDEF
+
+В AV1 существует такая технология как constrained directional enhancement filter (CDEF). CDEF представляет собой фильтр пост-обработки, который наряду с deblocking filter (DF) улучшает качество изображения. Выше были рассмотрены методы энтропийного кодирования, однако у них есть неприятное побочное действие: накопление ошибок на краях блоков. Восстановленная таким образом картинка похожа на мозаику из квадратов, как на рис. 6.
+
+![](e1407e52.png)
+
+Рисунок 6 – ошибки инверсной дискретной реконструкции
+
+Для решения этой проблемы существуют 3 фильтра, применяемых в каждом кадре по порядку: loop filter, CDEF. Конкретно CDEF отвечает за то, чтобы убрать шум рядом с границами. Для этого вычисляется, насколько текущий блок пикселей попадает в каждый из 8 фильтров направлений (45**°, 22.5°, 0°, -22.5°, -45°, -67.5°, -90°, -112.5°**) и дальше по границам идет фильтр, похожий на интерполяционный. В статье [3] предоставлена формула (7) фильтра по которой возможно оценить потенциальную трудоёмкость операции.
+
+$y\left(i,j\right)=R(x\left(i,j\right)+g(\sum\_{m,n\in N}^{}w\_{m,n}f(x\left(m,n\right)-x\left(i,j\right), S,D)))$ (7)
+
+Где N содержит пиксели соседние с x(i,j) с не-нулевыми весами $w\_{m,n}$,
+
+f() и g() – нелинейные функции,
+
+R(x) – округление x к ближайшему целому.
+
+* + 1. Deblocking filter
+
+Наряду с CDEF, DF устраняет блочность изображения, также за счет сложной интерполяции. Например, в работе [20] показана оптимизация адаптивного фильтра деблокинга, который работает на границах блоков 4x4. Его вычислительная сложность, несмотря на относительную простоту операций (сдвиги, сложения), остается высокой из-за необходимости обработки каждого пикселя на границе. В отличие от H.264, кодек AV1 использует более сложный и многоступенчатый подход к фильтрации, описанный подробно в главе VII статьи [21], что делает прямую репликацию методов невозможной. Однако, ключевая идея оптимизации — использование контекстной информации из битового потока для адаптации вычислительной нагрузки — остается актуальной для данной работы. Тем не менее, работа несет риск плохой воспроизводимости ввиду того, что используемые методы были применены на референсном декодере JM9.5, отличающемся тем, что в нём реализован необходимый минимум из стандарта. Это значит, что в нём изначально был большой потенциал оптимизаций и применение данной методики к AV1 может не дать существенного результата. Важно отметить, что DF и CDEF – дорогие операции для улучшения качества изображения в высоком разрешении.
+
+### Inter декодирование
+
+1. Motion Vectors
+
+Motion vectors (MV) – один из важнейших способов сжатия в видеодекодерах, позволяющий не хранить все кадры. В видео почти всегда присутствует движение, и ввиду этого вместо того чтобы кодировать каждый кадр как изображение, возможно закодировать движение пикселей или областей пикселей. Например, есть видео в котором мяч летит в ворота, а камера неподвижна. Вместо того, чтобы отдельно кодировать каждый кадр кодируется начальный кадр, а дальше – только дельты пикселей мяча для каждого кадра. Опорные кадры (также называющиеся reference frames или IDR frames) – кадры, которые невыгодно кодировать с помощью motion vectors, например смена сцены или положения камеры.
+
+1. Frames
+
+Подробная информация о фреймах представлена в разделе 1.7, можно лишь добавить что в AV1 существуют hidden frames – опорные фреймы, которые не добавляются в итоговый результат.
+
+### Результаты анализа стандарта AV1
+
+После проведенного анализа возможно выделить следующие средства, на которые стоит обратить внимание при оптимизации, представленные в таблице 2.
+
+Таблица 2 – сравнительная характеристика ключевых процессов AV1
+
+|  |  |
+| --- | --- |
+| таблица | Почему должно быть оптимизировано |
+| CDEF | Тяжеловесная формула (7), результат не виден в низком разрешении |
+| DF | Применяется к каждому блоку, результат не виден в низком разрешении |
+| Интерполяция | Применяется к каждому пикселю, занимает минимум 71 такт на пиксель |
+| Энтропийное кодирование | Имеет смысл оптимизация для низкого разрешения с квантизацией коэффициентов |
+
+Данные операции занимают много ресурсов и должны быть оптимизированы в первую очередь. В перспективе это даст хорошее увеличение производительности. В главе «реализация» приведено профилирование данных частей стандарта.
+
+* 1. Анализ методов оптимизации кода
+
+В данной главе будет рассказано об основных методах оптимизации с опорой на «правила оптимизации», предложенные профессором Массачусетского Технологического Института Джоном Луисом Бентли. В главе «Реализация» они будут применены для сокращения времени декодирования видео.
+
+### Правила Бентли
+
+Правила Бентли представляют собой подобие чек-листа из 20 пунктов, разделённых на 4 раздела: структуры данных, логика, циклы и функции. Некоторые пункты потеряли актуальность в связи с тем, что GNU GCC компилятор применяет их при включенных флагах -O2, -O3, а некоторые неприменимы к данной задаче. Рассмотрим оставшиеся.
+
+1. Инициализация во время компиляции
+
+Данный метод представляет собой практику инициализации значений во время компиляции. Например, есть функция, вычисляющая синус, умноженный на косинус, а точность выходного значения не сильно важна. В этом случае возможно инициализировать массив вида
+
+uint32\_t cossin[10]={0.0, 0.476, 0.294, -0.294, -0.476, -0.0, 0.476, 0.294, -0.294, -0.476} (3)
+
+затем вычислять приблизительное значение как
+
+result = cossin[i] (4)
+
+где i – (π\*2/10)\*(требуемый угол)
+
+Вычисляемые значения будут с погрешностью входного значения < π\*1/5. Тем не менее, данная методика может понижать производительность. В статье [22] рассматривается энтропийный декодер CAVLC кодека H.264, который, как и AV1, VP9, HEVC(H.265) является наследником MPEG и берет некоторые его концепции, а следовательно некоторые идеи по оптимизации H.264 могут быть полезны и для AV1. В частности, в статье рассматриваются такие методы оптимизации как аппаратное ускорение и отказ от lookup tables, пример которой представлен в данном разделе. Второй раздел более полезен для данной работы. В нём рассказывается о том, что отказ от множества lookup tables в пользу алгебраического выражения быстрее, так как это избавляет от необходимости в множественных вычислениях и кеш-промахах при обращении к данным.
+
+1. Плотность
+
+Как будет рассмотрено в разделе 1.9.2, крайне важно оптимизировать код для процессорного кеша, ввиду этого необходимо соблюдать плотность данных. Например, представим что в примере выше массив был инициализирован с точностью входного значения менее PI\*1/500, тогда в массиве будет 1000 значений. Если код будет запрашивать элементы в соответствии с нормальным распределением и если учесть что линия процессорного кеша вмещает 8 его элементов, то процент промахов может достигнуть 87.5%. Если же элементов 10, то при прочих равных процент промахов не будет выше 20%.
+
+1. Объединение тестов
+
+Общеизвестно что процессор имеет механизм branching. Это значит, что процессор может предсказать результат логического ветвления в коде и в соответствии с ним «положить» в конвейер инструкций соответствующий участок кода. Чем меньше процент верно угаданных развилок, тем ниже производительность, и соответственно выгоднее всего сократить количество возможных развилок объединив несколько условий в одно.
+
+1. Упорядочивание проверок
+
+В языках программирования логические операторы, как правило, «ленивые», следовательно необходимо упорядочивать проверки в условиях так, чтобы конечный результат был известен как можно раньше.
+
+5. Логические преобразования
+
+Данный метод не входит в перечень оптимизаций Бентли, однако его можно отнести к подвиду объединения тестов. Суть логических преобразований в том, чтобы заменить обычные логические вычисления быстрыми битовыми вычислениями.
+
+Например, условие
+
+if (x<4096 && x>=256) (5)
+
+можно заменить условием
+
+if( (x|~0xFF)&&(!(x&~0xFFF)) ). (6)
+
+Данный подход рассмотрен в статье [23]. В ней рассматриваются метод деления при помощи «магической константы» и его оптимизированный вариант, работающий на 30% быстрее. Деление редко встречается в декодировании видео и больше присутствует в кодировании, однако этот метод, несмотря на его сложность, может помочь ускорить интерполяцию, так как она производится путем деления суммы произведений коэффициентов фильтра и значений пикселя.
+
+### 1.8.2. Оптимизация CPU-кеша
+
+CPU-кеш – один из главных методов оптимизации кода. Его правильное использование может уменьшить скорость выполнения кода на величину до 99% в синтетических задачах. На рисунке 7 представлена относительная скорость доступа к разным типам памяти, и из него понятно, что доступ к ячейке оперативной памяти DDR4 в 120 раз более долгий чем доступ к ячейке L1 процессорного кеша. Следовательно, максимальная выгода в синтетической задаче от перемещения данных из dram в L1 кеш более 99%.
+
+Разумеется, это верно только для нескольких килобайт данных (48кб для intel i5-12400f), так что необходимо особо тщательно подходить к порядку запроса данных и количеству запрошенных данных.
+
+![Latency numbers of different golang operations | Amyangfei's Blog](9eb2d366.png)
+
+Рисунок 7 – memory latency table [24]
+
+* 1. Анализ существующей инфраструктуры
+
+В силу действующего контракта между «ООО КОМЭКСП» и исполнителем данной работы будет рассмотрена только структура существующей базы данных.
+
+На рисунке 8 представлена ER-диаграмма существующей базы данных. Из нее видно, что каждый архив связан с пользователем, а каждое видео — с архивом. На данный момент система позволяет объединять несколько видео в одну бизнес-сущность — архив.
+
+Подробное описание предназначений полей предоставлено в таблице 3.
+
+![](09fac66e.png)
+
+Рисунок 8 – ERD базы данных
+
+Таблица 3 – пояснение к ERD
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+| таблица | Поле | Тип данных | Для чего нужно |
+| Любая таблица | Id | int | Идентификатор записи |
+| users | Name | String | Имя пользователя |
+| Mail | String | Почта пользователя |
+| Created\_at | Timestamp | Когда был создан аккаунт |
+| Auth\_type | String | Тип аутентификации |
+| Pwd\_hash | String | Хэш пароля |
+| TG | string | Идентификатор в Телеграм |
+| Phone | String | Номер телефона |
+| Current\_hours | Int | Количество часов, в течение которых пользователь может использовать TAPe |
+| Tariffs | String | Тариф пользователя |
+| Public\_key | String | Публичный ключ пользователя |
+| Available\_tokens | Int | Доступное количество токенов для поиска |
+| Subscription\_status | string | Статус подписки |
+| Subscription\_expires\_at | Timestamp | Когда кончается подписка |
+| Subscription\_plan | String | План подписки |
+| Trial\_status | String | Статус пробного периода |
+| Trial\_end\_date | Timestamp | Конец пробного периода |
+| Pre\_trial\_tariff | String | Какой тариф был перед пробным периодом |
+| archives | Name | String | Название архива |
+| User\_id | Int | Идентификатор владельца архива |
+| Deleted | Bool | Удален ли архив |
+| Api\_keys | Key\_hash | String | Хэш апи ключа |
+| User\_id | Int | Идентификатор пользователя ключа |
+| Created\_at | Timestamp | Когда был создан ключ |
+| Last\_used | Timestamp | Последнее использование ключа |
+| Is\_active | Bool | Активен ли ключ |
+| Role | String | Роль ключа (администратор, владелец, пользователь) |
+| videos | Name | String | Название видео |
+| Path | String | Путь, по которому расположено видео |
+| Md5\_sum | string | Md5 сумма видеофайла |
+| Archive\_id | Int | Ид архива, которому принадлежит видео |
+| Is\_processed | Bool | Проиндексировано ли видео |
+| Description | String | Описание видео |
+| Dur | Int | Длительность видео в секундах |
+| disabled | Bool | Отключено ли видео |
+| Deleted | Bool | Удалено ли видео |
+| From\_youtube | Bool | Скачано ли видео с Youtube |
+| Full\_name | String | Полное название видео |
+
+* 1. Анализ технологического стека
+
+Для того, чтобы построить быструю и правильно работающую систему, которую легко поддерживать необходимо выбрать подходящие технологии. В данной главе будут перечислены основные технологии необходимые для реализации проекта.
+
+* + 1. Веб-сервер
+
+В качестве веб-сервера был выбран фреймворк **FastApi**. Несмотря на то, что он написан на Python и в связи с этим имеет проблемы с Requests Per Second, он является одним из самых быстрых веб-фреймворков для Python [15] ввиду минимального оверхеда, в отличие например от Django с большим количеством слоев абстракций и синхронной блокирующей архитектурой.
+
+* + 1. Оркестрация
+
+Учитывая требование о масштабируемости системы, она будет расположена на нескольких серверах для того чтобы обеспечить линейную загруженность пропорционально запросам. В связи с этим необходимо оркестрировать серверы, и для этого лучше всего подходит **Docker swarm** ввиду легкости развертывания. В дальнейшем может быть произведена миграция на Kubernetes.
+
+* + 1. Базы данных
+
+Немаловажным фактором в задержках является также база данных. Для хранения «горячих данных» вроде токенов (Api\_keys) пользователя будет использован **Redis**, так как он, храня информацию в оперативной памяти, уменьшает задержки памяти с уровня ssd/hdd до уровня оперативной памяти, что, исходя из таблицы на рис.7, может снизить задержку доступа к данным на 1-2 порядка.
+
+Для некритичных данных (Videos, Users, Archives) используем **PostgreSQL** ввиду её субъективного удобства и хорошего потенциала к масштабируемости, а для файлов используем S3 хранилище **Ceph**.
+
+Следует пояснить, почему выбрано именно S3 хранилище для файлов вместо обычной файловой системы. Даже если бы в работе была не распределенная архитектура с одним сервером-монолитом, это было бы ненадежно и нестабильно. Файловая система ext4, являющаяся системой по умолчанию, не справляется с большим количеством (больше миллиона) директорий и файлов, что было выявлено в «ООО КОМЭКСП» экспериментально. К тому же, обращение к файлам по их путям в коде достаточно неудобно. В свою очередь, Ceph имеет в себе оптимизации для хранения множества мелких файлов.
+
+* + 1. Брокер сообщений
+
+Учитывая распределённую архитектуру системы понадобится также брокер сообщений. Большинство брокеров используют под капотом быстрый протокол NATS, являющийся надстройкой над QUIC, так что будет выбран брокер с минимальным оверхедом – **NATS Jetstream**. Он характеризуется минимальными задержками, выдавая 1-5мс с гарантией доставки против 10-50мс у kafka [7].
+
+* + 1. Фронтенд
+
+В качестве фреймворка для фронтенда выберем **React,** так как он фактически на данный момент является монополистом рынка среди других фреймворков [8] и предлагает интеграцию с WASM. Для ускорения передачи видео будет использоваться **ffmpeg**, скомпилированный в **WebAssembly** для отделения аудио от видео.
+
+* 1. Результаты анализа объекта автоматизации
+
+В ходе работы была проанализирована предметная область, представляющая собой способы кодирования видео, основные методы оптимизации и краткий разбор технологий, которые будут использоваться. Также были перечислены потенциальные узкие места в стандарте видеокодека AV1 и основные методы оптимизации согласно профессору Массачусетского Технологического Института Джону Луису Бентли.
+
+Данная информация в будущем поможет при проектировании и реализации системы для декодирования видео.
+
+В результате анализа предметной области было составлено техническое задание, представленное в приложении Д.
+
+# Проектирование
+
+В данной главе будет представлено проектирование системы для декодирования видео в формате AV1. Несмотря на то, что система предназначена только для одной функции, необходимо будет реализовать вокруг неё полноценную инфраструктуру, включающую в себя базу данных, брокер сообщений, фронтенд и бэкенд.
+
+Для последующего анализа эффективности оптимизация также будет спроектирована наивная реализация системы, без каких-либо оптимизаций. Анализ производительности будет производиться по следующим параметрам:
+
+* + - Общая задержка от начала отправки видео на сервер до полного декодирования видео, в секундах.
+    - Минимальное время декодирования видео без учета времени передачи видео по результатам пяти тестовых запусков.
+    - Покадровая метрика потери качества видео, вычисляемая как разница Luma значений каждого пикселя кадра видео.
+    - Покадровая метрика PSNR.
+    - Время ответа при нагрузочном тестировании системы.
+
+Целевыми метриками считаются ускорение метрик 1 и 2 на 30-50% и 20-35% соответственно в сравнении с наивной реализацией, при этом PSNR должно сохраняться выше 15дб. Метрики 3 и 5 необходимы для характеризации системы в целом, но не критичны.
+
+### Проектирование наивной реализации системы
+
+Наивная реализация системы будет спроектирована максимально просто. Она будет представлять собой простое Flask-приложение, также включающее в себя frontend как jinja templates. На рис. 9 представлена диаграмма контейнеров наивной системы. Как можно увидеть, центральным является контейнер с flask приложением, включающий в себя весь функционал. Рассмотрим данный контейнер детальнее на рис. 10.
+
+![](83f42938.jpg)
+
+Рисунок 9 – naive system container diagram
+
+![](2ca6e707.jpg)
+
+Рисунок 10 – диаграмма контейнера flask приложения
+
+На данной диаграмме показано, как контейнер будет выглядеть внутри. Он будет использовать обыкновенную jwt-систему для авторизации, токены при этом будут храниться в sqlite. Планирование задач декодирования будет выполнено с помощью встроенных в python3 средств, таких как threading и multiprocessing.
+
+### Проектирование базы данных
+
+Учитывая, что наивная реализация необходима только для сравнения с оптимизированной реализацией, оставим только необходимые поля таблиц. В результате получим следующую ER диаграмму, представленную на рисунке 11. В данной схеме есть 4 таблицы.
+
+Таблица Users предназначена для хранения информации о пользователях, идентификация производится по номеру телефона и паролю, притом пароль не хранится в открытом виде.
+
+Таблица archives является бизнес-сущностью, объединяющей несколько видео. У архива есть название и идентификатор, притом архив может принадлежать одному пользователю.
+
+Таблица Videos хранит метаданные о видео, включая его путь в файловой системе на сервере, md5 сумму и состояние, в котором оно находится.
+
+Таблица Api\_keys хранит в себе токены для авторизации пользователя.
+
+![](84471011.jpg)
+
+Рисунок 11 – ER диаграмма базы данных наивной реализации
+
+### Проектирование оптимизированной реализации системы
+
+Наивная архитектура, рассмотренная выше, представляет собой неоптимизированную монолитную систему, которую крайне сложно масштабировать. В данной главе будет рассмотрена реализация максимально быстрой и надежной версии системы.
+
+Прежде всего необходимо будет сократить IO издержки, связанные с передачей файлов по сети. Учитывая, что система необходима для поиска видео по видео, объем файлов в некоторых случаях может достигать двух гигабайт. Для декодирования видео не нужна звуковая дорожка, присутствующая почти в каждом видеофайле, что поможет в оптимизации передачи видео. В связи с этим понадобится на стороне клиента вырезать из видеофайла аудиодорожку и отправлять в бэкенд получившийся файл. Также будет использован React как фреймворк для фронтенда ввиду его популярности и что более важно, масштабируемости.
+
+Как было показано на рис. 7, длительность обращения к оперативной памяти может быть сильно быстрее обращения к памяти на жестком диск, это означает, что если видео будет сохранено в файловую систему и будет декодировано оттуда, то это будет медленнее чем декодирование из оперативной памяти. Для минимизации данной задержки используем принцип memory buffer, то есть декодирование из оперативной памяти напрямую. Данный подход работает не всегда, особенно при высоких нагрузках, и в этом случае всё-таки понадобится сохранить файл. Учитывая распределённую архитектуру, используем S3 хранилище. Оно необходимо, учитывая, что нужно будет распределить хранилище по нескольким серверам, что решит проблему ограниченности памяти.
+
+Backend же тоже будет распределён по нескольким серверам. Для того, чтобы обеспечить согласованность серверов и доставку сообщений будет использован брокер сообщений NATS Jetstream. На таблице 4 продемонстрировано сравнение популярных брокеров сообщений. Стоит отметить, что очередь необходима также для асинхронных коммуникаций, а потому необходима персистентность сообщений. Стоит отметить, что NATS Jetstream – не идеальный брокер, который, в отличие от Apache Kafka, появился сравнительно недавно и поэтому у некоторых пользователей Jetstream появляются проблемы со стабильностью. Тем не менее, это один из самых быстрых брокеров, что имеет первостепенное значение для решаемой задачи.
+
+Таблица 4 – сравнительный анализ брокеров сообщений
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+| Брокер сообщений | Латентность | Сравнительная пропускная способность | Персистентность |
+| Core NATS | <1мс [13] | Высокая | Нет |
+| NATS JetStream | 1-5мс [12] | Выше среднего | Да |
+| Apache Kafka | 10-50мс [12] | Высокая | Да |
+| RabbitMQ | 5-20мс [14] | Средняя | Да |
+
+Система представлена в виде диаграммы C4 на рис. 12.
+
+|  |  |
+| --- | --- |
+| ![](f96a1c60.png) | Рис. 12 – диаграмма контейнеров системы. |
+
+Диаграмма компонентов представлена на рис. 13. Рассмотрим самые важные из них в следующих главах.
+
+![](bb21f39d.jpg)
+
+Рисунок 13 – диаграмма компонентов оптимизированной системы
+
+### Проектирование реляционной базы данных
+
+Для данной системы будут использоваться несколько различных баз: low-latency база для горячих данных, реляционная база для стандартных реляционных данных и S3 хранилище Ceph для видеофайлов и индексов.
+
+Опустим проектирование нереляционных баз ввиду того, что их структура легче поддаётся изменению.
+
+В качестве реляционной базы будет использован PostgreSQL ввиду его масштабируемости и интеграции, а также большей устойчивостью к высоким нагрузкам чем у его прямого конкурента MySQL.
+
+Структура таблиц будет перенесена из существующей базы, ER диаграмма которой представлена на рис. 8, так что она будет оставлена без изменений. Имеет смысл рассмотреть предназначение таблиц в существующей базе данных.
+
+Таблица Users, как и в наивной реализации, хранит данные о пользователях, но в гораздо большем объеме, включая метод авторизации, дату регистрации, тарифный план и т.д.
+
+Таблица Roles и соответствующая ей таблица r\_users\_roles позволяют установить соответствие конкретного пользователя/пользователей к роли/ролям, будь то администратор или обычный пользователь.
+
+Таблицы Videos и Api\_keys хранят информацию, аналогичную тем же таблицам в наивной реализации.
+
+### Проектирование бэкенда
+
+Бэкенд системы является центральным компонентом всей архитектуры и отвечает за обработку пользовательских запросов, управление задачами декодирования, взаимодействие с базами данных и интеграцию с видеодекодером. Основной задачей серверной части является обеспечение максимально быстрой обработки операций «загрузка – декодирование» при сохранении масштабируемости системы. Для этого был выбран подход горизонтального масштабирования, при котором увеличение вычислительных мощностей достигается за счет увеличения серверов. Компонент Api Gateway проксирует запросы на свободный сервер-реплику с компонентами бэкенда и декодера, а если такового нет, то на наименее занятый сервер. Степень загрузки мониторится из бэкенда и сохраняется в redis.
+
+Для того, чтобы обработать все запросы, будет применен паттерн «request queue», реализация которого в архитектуре системы представлена на рис. 14. Смысл данного паттерна в том, чтобы сохранять запросы в очередь и равномерно маршрутизировать их на реплики бэкенда, что гарантирует обработку всех запросов.
+
+![](a4779b18.jpg)
+
+Рис. 14 – Схема системы декодирования
+
+Как видно из рис. 13, бэкенд связан с компонентами message broker, api gateway и ffmpeg. FFMPEG является инструментом с открытым кодом для работы с видео. В нём реализованы методы работы с файловой системой и видеодекодерами, поэтому и в наивной, и в оптимизированной реализации он будет необходим для использования Dav1d. Коммуникация с FFMPEG будет происходить через shell, с использованием in-memory файловой системы или S3 хранилища когда это невозможно. На рис. 15 представлена упрощенная реализация decision tree маршрутизатора. Наиболее приоритетный сервер для декодирования – сервер со свободной оперативной памятью и вычислительными мощностями. В случае, если не хватает оперативной памяти, будет использован метод потокового декодирования из S3 хранилища. На данный при определении доступной вычислительной мощности для декодирования исходим из того, что количество доступных ядер = (суммарное количество логических ядер процессора – 1), так как одно из ядер должно оставаться за wsgi сервером В случае превышения этого количества ожидается снижение производительности за счет вытеснения одного процесса другим. В главе «реализация» будет экспериментально проверено оптимальное количество ядер.
+
+![](c1585d05.jpg)
+
+Рис. 15 – Алгоритм метода выбора сервера для декодирования
+
+Как было рассмотрено в главе 2.2.1, каждому видео соответствует статус обработки. Это целое значение, которое имеет несколько состояний: uploaded, queued, processing, done, failed, retrying. Их возможная смена показана на рис. 21.
+
+![](2d6a95a4.jpg)
+
+Рис. 21 – диаграмма состояний видео
+
+В таблице 5 показаны требуемые REST эндпоинты, которые будут реализованы в апи.
+
+Таблица 5 – требуемые эндпоинты
+
+|  |  |  |  |  |  |
+| --- | --- | --- | --- | --- | --- |
+| Метод | Путь | Описание | Тело запроса | Ответ | Код |
+| POST | /auth/register | Регистрация пользователя | Phone, password | user\_id | 201 |
+| POST | /auth/login | Авторизация | Phone, password | access\_token, refresh\_token | 200 |
+| POST | /auth/refresh | Обновление токена | Refresh\_token | access\_token | 204 |
+| POST | /auth/logout | Выход | - |  | 200 |
+| POST | /archives | Создать архив | Name | archive\_id | 200 |
+| GET | /archives | Список архивов пользователя |  | [{archive\_id, name, created\_at}] | 200 |
+| POST | /archives/{archive\_id}/videos | Загрузить видео в архив | .obu файл | video\_id, task\_id | 202 |
+| GET | /archives/{archive\_id}/videos | Список видео в архиве |  | [{video\_id, name, state}] | 200 |
+| DELETE | /videos/{video\_id} | Удалить видео |  |  | 204 |
+
+Выше было упомянуто, что задача имеет свой статус, однако в требуемых эндпоинтах нет опции узнать статус. Это сделано из-за того, что нотификация пользователя будет происходить с помощью соединения через вебсокет.
+
+Уведомление через вебсокет – довольно удобное и логичное решение, избавляющее от необходимости посылать http запрос каждый несколько секунд чтобы узнать статус. Однако появляется новое ограничение, связанное с особенностью вебсокета: при большом количестве подключений система начинает работать медленнее. Чтобы избежать замедления воспользуемся мощностями серверов, проксируемых с помощью API Gateway. Каждое соединение вебсокета будет держаться на отдельном сервере до момента пока у пользователя есть активные задачи. Когда приходит уведомление о конце задачи в очередь происходит бродкаст-рассылка этого сообщения на все реплики, и реплика, выполняющая эту задачу, закрывает соединение. Это показано на рис. 22.
+
+![](38163ff9.png)
+
+Рисунок 12 – диаграмма последовательности для уведомления клиента
+
+### Проектирование фронтенда
+
+Фронтенд системы выполняет несколько задач, включающих в себя авторизацию пользователя, загрузку видеофайлов, их предварительную обработку и отправку обработанных видео на сервер.
+
+Для отделения аудиоданных от видео используется FFMPEG, скомпилированный под архитектуру WebAssembly. Компиляция осуществляется с помощью инструмента Emscripten, что позволит запустить код на C в браузере, на стороне клиента.
+
+Дизайн не играет особой роли в данной системе (по крайней мере, не является основной целью), так что было принято решение спроектировать его максимально простым. Интерфейс состоит из трех экранов: регистрация, логин и загрузка видео. Их прототипы представлены на рис. 16, 17 и 18 соответственно.
+
+![](c7b466c9.png)
+
+Рис. 16 – экран входа
+
+![](86dc4344.png)
+
+Рис. 17 – экран регистрации
+
+![](af44c6fa.png)
+
+Рис. 18 – экран загрузки видео
+
+### Проектирование оптимизаций Dav1d
+
+В данной главе будут описаны основные методы оптимизации Dav1d, ранее затронутые в главе 1. Стоит оговориться, что видеодекодер – крайне оптимизированное по, и любое серьёзное вмешательство может вызвать в нём эффект домино, сбивая общую структуру, оптимизированную под процессорный кеш, архитектуру процессора и пр. В связи с этим в данной главе не будут предлагаться радикальные вмешательства, меняющие общую структуру данных или логику работы кодера.
+
+CDEF
+
+Constrained directional enhancement filter, как было рассмотрено в разделе 1.7.2, является ресурсоемкой но важной частью для сохранения качества видео при декодировании. Тем не менее, в задаче декодирования в сверхнизком разрешении артефакты на границах блоков, как правило, не влияют на качество видео, так что будут проведены два эксперимента: с четырьмя фильтрами с углами наклона (45**°, 0°, -45°, -90°**) вместо восьми исходных (45**°, 22.5°, 0°, -22.5°, -45°, -67.5°, -90°, -112.5°**) и с отключённым CDEF.
+
+DF
+
+В отличие от CDEF, DF имеет также высокое значение для низкого разрешения. Это значит, что если отключить фильтр блочности сразу на всех кадрах, то артефакты будут накапливаться от опорных кадров с каждым новым B-кадром. Для устранения этого эффекта будет использоваться подход, при котором фильтр блочности будет применяться только для опорных кадров, хоть стандарт errata и подразумевает что DF должен быть включен либо выключен везде. В таком случае накопление артефактов должно замедлиться, учитывая, что каждый кадр использует сразу несколько опорных кадров. Также будет реализована версия, в которой DF вырезан полностью, чтобы подтвердить или опровергнуть вышеупомянутую гипотезу.
+
+Entropy coding
+
+Теоретически энтропийное декодирование занимает меньше ресурсов, чем интерполяция или фильтры. Тем не менее, оно происходит на каждом кадре в минимум одном блоке, так что имеет смысл попробовать его оптимизировать.
+
+Как упоминалось в главе анализа, DCT и IDCT использует таблицу частот, также называемую таблицей квантизации. В качестве оптимизации можно применить подход обрезки, квантовав её в 4 раза, оставив только частоты в верхнем левом квадрате. На рис. 19 красным цветом обозначены частоты, которые будут оставлены, а синим – все доступные частоты при операции IDCT. Если гипотеза верна, то при такой оптимизации видео с низким разрешением почти не потеряет качество, так как высокие частоты используются для кодирования мелких деталей видео, которые не важны. В случае успеха оптимизация будет расширена до других методов энтропийного декодирования.
+
+![](9bf7bd17.png)
+
+Рис. 19 – объяснение метода квантизации таблицы коэффициентов
+
+Интерполяция
+
+Для оптимизации интерполяции, как и для DF и CDEF будут использоваться 2 метода: полный вырез и максимальное облегчение. Для второго варианта нужно предусмотреть сохранение качества, потому что иначе может произойти каскадная деградация качества. На рис. 20 можно заметить, что в процессе интерполяции коэффициенты на 1,2,7 и 8 позициях очень редко имеют большое значение. Это значит, что возможно попробовать без ущерба для качества видео вырезать их и оставить 4-tap интерполяцию по коэффициентам 3-6, либо 2-tap, в зависимости от метрики PSNR по результату.
+
+![](d5f0cf45.png)
+
+Рис. 20 – таблица коэффициентов интерполяции [11]
+
+### Выводы
+
+В ходе проектирования была разработана архитектура системы быстрого декодирования видео в формате AV1, удовлетворяющая функциональным и нефункциональным требованиям, сформулированным в главе 1.
+
+Для обеспечения возможности сравнительного анализа была спроектирована наивная реализация системы на основе монолитного Flask-приложения с хранилищем SQLite. Данная реализация намеренно лишена каких-либо оптимизаций и служит базовой точкой отсчёта для измерения эффективности оптимизированной версии.
+
+Оптимизированная реализация системы построена на принципах горизонтального масштабирования и минимизации задержек на каждом уровне стека. В качестве ключевых архитектурных решений были приняты следующие: использование брокера сообщений NATS JetStream для асинхронной маршрутизации задач декодирования между репликами бэкенда; применение Redis для хранения горячих данных о состоянии задач с целью снижения задержки доступа по сравнению с реляционной базой данных; декодирование видео из оперативной памяти в приоритетном порядке, с использованием S3-хранилища Ceph в качестве запасного варианта при недостатке памяти.
+
+Спроектирован REST API, необходимый для авторизации, управления архивами и жизненного цикла задач декодирования. Для уведомления клиента о завершении декодирования выбран протокол WebSocket вместо HTTP-поллинга, что исключает избыточные запросы к серверу и снижает итоговую задержку уведомления с 0–2000 мс до уровня сетевой латентности.
+
+Жизненный цикл задачи декодирования формализован в виде диаграммы состояний, включающей шесть состояний: uploaded, queued, processing, done, failed, retrying.
+
+На стороне клиента спроектирован модуль предварительной обработки видео на базе ffmpeg, скомпилированного в WebAssembly, выполняющий отделение аудиодорожки перед отправкой файла на сервер. Данное решение позволяет сократить объём передаваемых данных без потери информации, необходимой для индексации.
+
+Таким образом, спроектированная система обеспечивает выполнение всех требований, выявленных в ходе анализа предметной области, и формирует основу для последующей реализации и оптимизации декодера Dav1d, описанных в главе 3.
+
+# Реализация
+
+В данной главе совмещены написание финальной оптимизированной системы, оптимизации DAV1D и тестирование оптимизаций с указанием их влияния на итоговую производительность.
+
+Глава делится на 4 раздела: «оптимизации DAV1D», «финальная система», «тестирование», «исходный код». В первом разделе описаны проведённые оптимизации DAV1D и их результаты. Во втором разделе описана реализация оптимизированной и наивной систем. В третьем разделе описаны протоколы тестирования каждой из частей и их результат. В четвёртом приведены ссылки на репозитории с работой.
+
+* 1. Оптимизации DAV1D
+
+Все оптимизации, приведённые ниже, протестированы с помощью утилиты Hyperfine и тестового отрывка фильма «Fast & furious 8» длиной в 30 минут, каждая оптимизация тестируется в 3 итерации с прогревом жесткого диска в одноядерном режиме, в качестве оценки используется минимальное время, так как оно является минимально зашумленной метрикой. Тесты запущены на сервере с ОС ubuntu 22.04.5, без графической оболочки и устройств пользовательского ввода, без других запущенных пользовательских процессов кроме родительского процесса бенчмарка и дочернего процесса декодирования.
+
+Для каждой оптимизации также представлено визуальное сравнение с помощью утилиты FFMPEG.
+
+Минимальное время, замеренное на стандартной имплементации DAV1D с отключенными SIMD, в однопоточном режиме: 545.83с.
+
+### CDEF, Loop filter (DF)
+
+Вопреки ожиданиям, отключение одновременно Constrained Directional Enhancement Filter и Deblocking Filter (называющийся в стандарте errata Loop Filter) снизило качество на незначительные значения, при этом существенно сократив время обработки видео на 26%, составив 404с со средним значением 415с. В связи с этим нет необходимости производить оптимизации данных частей. Тем не менее, представленные методы могут быть использованы при оптимизации видео для более высокого разрешения.
+
+![](9332dc14.png)
+
+Рис. 21 – дельта файла loopfilter\_tmpl.c
+
+![](28134f93.png)
+
+Рис. 22 – дельта файла lib.c
+
+### Интерполяция
+
+Для оптимизации одного из самых ресурсоемких процессов было использовано несколько методов, каждый из них приведён ниже.
+
+* + 1. Сокращение количества фильтров до 6
+
+В качестве первого метода оптимизации интерполяции был выбран метод сокращения фильтров интерполяции с восьми до шести, что сократило время декодирования на 30.5%, составив 379с со средним значением 393с. Данная оптимизация не затрагивает коэффициенты интерполяции, представленные на рис. 20, и сохраняет приемлемое качество видео ввиду того, что коэффициенты на позициях 1 и 8 (опущенные в данном варианте), как правило, имеют значение 0, то есть не влияют на итоговый результат.
+
+![](51a8cfa4.png)
+
+Рис. 23 – дельта файла mc\_tmpl.c
+
+* + 1. Сокращение вариантов интерполяции до 6
+
+В качестве второго метода оптимизации были сокращены варианты интерполяции с 90 до 6. Каждый из вариантов, представленный на рис. 20, имеет смещение к левому краю или правому, сохраняя баланс коэффициентов. Возьмём, к примеру, коэффициенты sharp 0/16 и 10/16, представляющие собой {0,0,0,128,0,0,0,0} и {-2,8,-20,60,100,-24,10,-4}. Как мы можем видеть, коэффициенты дают одинаковую сумму, но в 10/16 сумма распределена влево, хотя фильтр тот же. Данная оптимизация убирает вариацию между различными фильтрами интерполяции, жестко фиксируя фильтр на 7/16, то есть промежуточном значении с нейтральным смещением. Это оптимизирует локальность данных и позволяет закешировать все фильтры интерполяции в одну линию процессорного кеша, в случае если его размер для этого подходит. Для этого также структура фильтров выравнивается в памяти по 64 байтам, что достаточно для всей структуры. Результат оптимизации: 32.5%, 368с со средним значением 384с.
+
+![](2fea57d2.png)
+
+Рис. 24 – дельта файла mc\_tmpl.c
+
+![](e0a47d29.png)
+
+Рис. 25 – дельта файла tables.c
+
+* + 1. Сокращение количества фильтров до 4
+
+В отличие от метода 1, в данном методе не получится просто опустить 2 и 7 фильтры ввиду того, что от этого потеряется баланс суммы коэффициентов, равный 128, ввиду чего будет теряться качество не только в областях интерполяции, но и на всем изображении в целом. Некоторые области будут засветляться или затемняться, интерполируемые от них области также будут менять Luma-компонент, ввиду чего ошибки будут копиться экспоненциально. В связи с этим необходимо переписать значения коэффициентов фильтров, сохраняя сумму 128. Учитывая, что в методе 2 количество вариантов интерполяции было сокращено до 6, объем работы снижен радикально. В DAV1D сумма коэффициентов равна 64, но это не меняет сути, так как в дальнейшем к коэффициентам при интерполяции применяется битовый сдвиг влево, то есть умножение на 2.
+
+Данная оптимизация сокращает время декодирования на 33.1%, 365с со средним значением 373с.
+
+![](9c1f1c4a.png)
+
+Рис. 26 – дельта файла mc\_tmpl.c
+
+![](ef416383.png)
+
+Рис. 27 – дельта файла tables.c
+
+* + 1. Сокращение дробного остатка
+
+При вычислении интерполированного значения используется следующая формула:
+
+(A\*X[0]+B\*X[1]…+(1<<7)>>1)>>7, (8)
+
+Где A..H – коэффициенты интерполяции,
+
+X – массив интерполируемых пикселей,
+
+В данной формуле битовый сдвиг на 7 отвечает за быстрое деление на 128 (отсюда и вытекает требование к сумме коэффициентов), а часть с (1<<7)>>1 является выражением для увеличения точности, сохраняя нечетные биты. Данная оптимизация вырезает это выражение, достигая прироста скорости в 36% при времени декодирования в 349с и среднем времени 353.9с.
+
+![](cd9901a1.png)
+
+Рис. 28 – дельта файла mc\_tmpl.c
+
+### Оптимизация обратных трансформаций
+
+Как было описано в главе 2, данная оптимизация затрагивает обратные трансформации частот, убирая половину частот в каждой из DCT трансформаций. Экспериментальным путем было выявлено, что избавление от 75% частот вместо 50% приводит к сильным артефактам видео, искажающим его качество.
+
+Данная оптимизация повышает прирост скорости до 38.1% при времени декодирования 337с и среднем времени декодирования 355с.
+
+![](7bbdc245.png)
+
+Рис. 29 – дельта файла itx\_1d.c
+
+### Оптимизация реконструкции изображения
+
+В ходе разработки также был вырезан фильтр Винера, используемый для реконструкции кадра. Прирост производительности составил 38.5%, время декодирования – 335.9с при среднем времени в 339с.
+
+![](f0729515.png)
+
+Рис. 30 – дельта файла looprestoration\_tmpl.c
+
+### Выводы
+
+На рисунках 31 и 32 ниже представлены время декодирования видео и прирост производительности в зависимости от оптимизаций. Оптимизации применяются последовательно, поэтому эффект от них – кумулятивный. Суммарный эффект в 38.5% ускорения декодирования отвечает поставленным нефункциональным требованиям.
+
+![](982846f6.png)
+
+Рис. 31 – зависимость времени декодирования от оптимизаций
+
+![](731a9e18.png)
+
+Рис. 32 – зависимость прироста скорости от оптимизаций
+
+* 1. Финальная система
+
+В данном разделе будут описываться 2 системы: наивная, неоптимизированная система и финальная система со всеми оптимизациями.
+
+### Реализация наивной системы
+
+Для данной системы был выбран упрощённый стек из стандартного DAV1D, Fastapi и PostgreSQL. Данная система не масштабируется и медленно обрабатывает одиночные изображения.
+
+Система состоит из трех контейнеров: фронтенд, бэкенд, совмещающий авторизацию и декодирование, а также контейнер базы данных. Бэкенд использует стандартный декодер DAV1D.
+
+1. Реализация Backend
+
+В backend апи главной функцией является upload. Данная функция с помощью FFMPEG отделяет obu-файл (представляющий собой видеопоток av1 кодека) от всего файла, декодирует с помощью стандартного av1 первый кадр, затем с помощью него декодирует остальной поток и возвращает первый кадр. Данная функция представлена на рис. 33.
+
+![](9a7facd1.png)
+
+Рис. 33 – naïve upload
+
+Функция также полагается на авторизацию, которая происходит на каждом запросе как обращение к реляционной базе данных ввиду «наивности» реализации. Сервис авторизации использует паттерн access/refresh, для пользователя создаётся короткий access token и долго живущий refresh token. Хэширование происходит по алгоритму SHA256 ввиду того, что Comexp нацелена на западный рынок, ввиду чего не имеет смысла использовать российские алгоритмы шифрования.
+
+Frontend реализован как простое React приложение с двумя экранами.
+
+![](2911a008.png)
+
+Рис. 34 – экран входа
+
+![](c242daf4.png)
+
+Рис. 35 – экран загрузки
+
+### Реализация оптимизированной системы
+
+Оптимизированная система в целом похожа на наивную реализацию, но имеет больше деталей и оптимизаций.
+
+1. Backend
+
+Самая очевидная оптимизация – использование оптимизированного DAV1D в качестве видеодекодера.
+
+Backend состоит из 6 контейнеров, ниже – пояснения по каждому из них.
+
+* Common-api – API авторизации, необходимое для бизнес-функций.
+* Gateway – балансировщик и прокси, проксирует все запросы кроме связанных с upload на common-api, а запросы связанные с upload – на наименее занятую реплику в соответствии с алгоритмом, описанным в разделе 2.2.2. Аккумулирует состояния Decoder-api.
+* Decoder-api – API декодирования, использующее оптимизированную версию DAV1D для декодирования видео. Отправляет свой статус на Gateway.
+* Nats – контейнер с очередью NATS Jetstream.
+* Redis – контейнер с Redis, хранящий горячие данные.
+* Db – контейнер с Postgresql, хранящий реляционные данные.
+
+Рассмотрим подробнее каждый первые три.
+
+* 1. Common-api
+
+Данный контейнер во многом похож на вышеописанный контейнер common-api наивной реализации.
+
+Данный контейнер реализует все необходимые эндпоинты, описанные во второй главе.
+
+Эндпоинт /user, необходимый для авторизации пользователя, устроен по принципу процессорного кеша, где L1 выступает Redis, а L3 – PostgreSQL. При получении запроса на получение данных сначала проверяется access token в Redis, а в случае ошибки происходит «холодный промах», при котором проверяется значение в PostgreSQL и в случае успеха сохраняется в Redis.
+
+Access и refresh токены хранятся в реляционной базе данных.
+
+* 1. Gateway
+
+Как уже было описано во второй главе, проблемой становится уведомление пользователя о конце декодирования. Для решения этой проблемы был применен описанный подход: Gateway открывает вебсокет-соединение по адресу /ws/client\_notification, к которому подключаются клиенты передавая свой access token. Далее клиент добавляется в список рассылки, где ключом служит id пользователя, Gateway входит в блокирующее чтение jetstream очереди notifications и при появлении сообщения, адресованного пользователю, отправляет его. В случае если вебсокет закрыт на стороне клиента данный клиент удаляется из списка рассылки. На рисунке 36 представлена функция, отвечающая за рассылку.
+
+![](b195723c.png)
+
+Рис. 36 – функция рассылки сообщений
+
+Второй проблемой является масштабирование нагрузки, для которой был спроектирован алгоритм балансировки. Реплики decoder-api сортируются в первую очередь по загруженности процессора, а во вторую – по оперативной памяти. Разумеется, редко два процессора загружены на идентичное количество работы, так что память будет учитываться редко. Тем не менее, в алгоритм маршрутизации также заложен критерий выбора первого сервера с достаточным количеством оперативной памяти для данного видео. Это необходимо для того, чтобы максимально быстро декодировать видео прямо из памяти, вместе с тем предотвращая заполнение памяти реплики более чем на 90%. В случае, если памяти нет ни на одном сервере, прокси ищет сервер с необходимым количеством дисковой памяти. В случае, если нет и его, возвращается сообщение о том, что свободных реплик нет.
+
+Также Gateway получает информацию от серверов-реплик через вебсокет по адресу /ws/replica с информацией о загрузке ЦПУ за последнюю минуту, свободной оперативной памяти и свободной дисковой памяти.
+
+Чтобы уменьшить сетевые накладные расходы было принято решение отказаться от прямого проксирования к Decoder-api, потому что в таком случае появились бы издержки на передачу данных к одному дополнительному серверу. Вместо этого при GET запросе к апи маршрутизации с access токеном Gateway формирует одноразовый токен, в котором закодирован user и выдаёт ссылку на конкретную реплику декодера с встроенным в неё вышеупомянутым токеном.
+
+* 1. Decoder-api
+
+Decoder-api, будучи API для декодирования, имеет основную функцию upload, принимающую на вход OBU-файл, представляющий собой видеопоток кодека AV1, сохраняющий в оперативную память для уменьшения задержек чтения данных, а после этого декодирующий с помощью оптимизированного видеодекодера DAV1D. После декодирования посылается сообщение в Jetstream очередь с полезной нагрузкой и адресом получателя.
+
+1. Frontend
+
+Frontend во многом напоминает наивную реализацию, однако для сокращения сетевых издержек был разработан алгоритм вырезания из видео аудио. Для этого был скомпилирован FFMPEG в целевую платформу WASM с помощью Emscripten версии 4.0.12, затем интегрирован в React приложение.
+
+* 1. Тестирование
+
+В главе 2 были определены следующие метрики: общая задержка от начала отправки видео на сервер до полного декодирования видео в секундах; минимальное время декодирования видео без учета времени передачи видео по результатам пяти тестовых запусков; покадровая метрика потери качества видео, вычисляемая как разница Luma значений каждого пикселя кадра видео; покадровая метрика PSNR; время ответа при нагрузочном тестировании системы. Для каждого из критериев будет дано подробное объяснение релевантности критерия, протокол тестирования и его результат.
+
+Для тестирования обе системы были развернуты на 1-2 серверах Timeweb Cloud с минимальной конфигурацией: 15Гб дискового пространства, 1Гб оперативной памяти, 1 ядро процессора.
+
+### Общая задержка от начала отправки видео на сервер до полного декодирования
+
+Данный критерий проверяет систему с позиции пользователя: насколько для него изменилось взаимодействие с системой через frontend.
+
+Для данной метрики был написан скрипт, находящийся в репозитории проекта по пути benchmarks\throughput\bench.py. Данный скрипт последовательно загружает OBU-видео в оптимизированную систему и MKV-видео в наивную. Загрузка WASM модуля не эмулируется, так как в оптимизированной системе после первой загрузки он кешируется.
+
+В качестве результата выбирается минимальное время декодирования, так как, по словам профессора MIT Чарльза Лейзерсона, минимальное время выполнения показывает время выполнения с минимальной зашумлённостью [26].
+
+По результатам тестирования минимальное время для оптимизированной системы: 165.9 секунд, для наивной: 283.4 секунд. Бенчмарки для обеих систем выполнялись одновременно и параллельно, чтобы исключить задержки, связанные с флуктуацией скорости сети.
+
+### Минимальное время декодирования видео без учета времени передачи
+
+Данная метрика уже была описана в разделе 3.1, для её замера был разработан скрипт, находящийся в репозитории проекта по пути benchmarks/decoder/dav1d.sh. В ходе профилирования было выявлено, что флуктуации скорости декодирования – незначительны ввиду того, что декодируется получасовое видео. В связи с этим, а также для сокращения времени всего процесса и, соответственно, увеличения скорости разработки, было принято решение измерять производительность по трём итерациям.
+
+### Покадровая метрика потери качества видео
+
+Данная метрика не является стандартом индустрии и необходима скорее для внутренней относительной оценки декодера в компании Comexp. Для её оценки был реализован скрипт, находящийся по пути benchmarks\quality\framewise\_luma.py.
+
+Скрипт вычисляет покадровое отклонение каждого пикселя декодированного видео с помощью оптимизированного декодера и видео декодированного с помощью оригинального декодера, затем вычисляет среднее по кадру и среднее по видео. Результаты бенчмарка представлены в файле-отчёте по пути benchmarks\quality\framewise1000.md. Средняя мера отклонения на тестовом видео при вычислении по тысяче фреймов (примерно 40 секунд) – 6.28 с максимумом 9.62. Данная метрика может принимать значение от 0 до 255, получившийся результат был признан Comexp как приемлемый. На рис. 37 представлен график среднего отклонения по фрейму (сверху) и кумулятивный график отклонения (снизу). Как можно увидеть, на верхнем графике имеются резкие спады – предположительно это связано с тем, что при декодировании Golden frame сбрасывается кеш предсказания и накопленные ошибки вместе с ним.
+
+![](ae1da85f.png)
+
+Рис. 37 – график покадрового отклонения luma
+
+### Покадровая метрика PSNR
+
+Следующая метрика – Peak Signal-to-Noise Ratio. В отличие от framewise luma, данная метрика широко используется в видеоиндустрии для оценки деградации качества видео по сравнению с оригиналом. Для её вычисления был разработан скрипт, находящийся по пути benchmarks\quality\psnr.py, отчёт о выполнении представлен в benchmarks\quality\psnr1000frames.md. По результатам выполнения бенчмарка на 1000 фреймов был получен результат 26.2 дБ с минимумом 21.02дБ и максимумом 35.38дБ. Это низкое значение, но оно удовлетворяет требованиям задачи.
+
+### Нагрузочное тестирование
+
+Для нагрузочного тестирования был разработан скрипт, представленный по пути benchmarks\throughput\bench.py. Данный скрипт параллельно отправляет 50 видео по 38мб продолжительностью 60 секунд с задержкой 0.5с на видео. В результате тестирования оптимизированной и наивной систем были получены следующие результаты:
+
+Таблица 6 – нагрузочное тестирование
+
+|  |  |  |  |  |
+| --- | --- | --- | --- | --- |
+| система | Количество обработанных видео | Суммарное время выполнения бенчмарка, в секундах | Суммарный размер обработанных видео, Мб | Среднее значение скорости обработки видео, Мб/с |
+| оптимизированная | 17 | 150.61 | 646 | 4.28 |
+| наивная | 50 | 957.84 | 1900 | 1.98 |
+
+Как можно увидеть, оптимизированная система имеет пропускную способность более чем в 2 раза большую, нежели наивная, будучи развернутой на двух серверах. Следует отметить, что 17 обработанных видео – не ошибка, скрипт тестирования реализован так, что при получении сообщения о недостатке свободных реплик он не пытается повторить запрос.
+
+* 1. Исходный код
+
+Исходный код оптимизированного видеодекодера доступен по адресу https://github.com/ressiwage/DAV2D. Исходный код WASM-версии FFMPEG доступен по адресу https://github.com/ressiwage/FFFMPEG. Исходный код всей системы доступен по адресу https://github.com/ressiwage/UFAV1VDS. Протокол бенчмарков видеодекодеров доступен по адресу https://github.com/ressiwage/AV1-bench.
+
+# Заключение
+
+В данной работе имеется ряд нюансов, как, например, отсутствие полноценного тестирования фронтенда и частей, не относящихся к декодированию. Тем не менее, были полностью решены все поставленные задачи, а результаты удовлетворяют метрикам. При достаточном количестве серверов система может обработать любую нагрузку, а её масштабирование происходит линейно. Видеодекодер DAV1D оптимизирован на 38.5%, система целиком – более чем в 2 раза.
+
+В результате анализа был проведен разбор необходимых частей стандарта AV1 для выявления узких мест, необходимых для работы.
+
+В результате проектирования была разработана масштабируемая архитектура двух систем декодирования.
+
+В результате реализации и тестирования была разработана система и были получены необходимые метрики.
+
+# Глоссарий
+
+Motion Vectors (MV) – метод сжатия видео путем извлечения из видео векторов движения.
+
+Constrained directional enhanced filter (CDEF) – метод постобработки видео для устранения артефактов.
+
+Deblocking filter (DF) – метод постобработки видео для уменьшения блочности.
+
+Оверхед – накладные расходы какой-либо технологии.
+
+Видеокодек (кодек) – стандартизированный метод кодирования и реализованный видео.
+
+Видеодекодер (декодер) – стандартизированный метод декодирования видео, реализованный в виде программного обеспечения.
+
+TAPe – запатентованная система компании «ООО КОМЭКСП», предназначенная для индексации видео.
+
+AOMedia Video 1 (AV1) – открытый стандарт видеокодека, разработанный консорциумом AOMedia Alliance for Open Media.
+
+Errata (AV1-v1.0.0errata) – название стандарта, определяющего поведение видеокодека AV1.
+
+Frame – кадр в декодируемом видео, представляющий собой последовательность пикселей. Не обязательно присутствует в конечном видео после декодирования.
+
+Макроблок – сущность, объединяющая квадратную область из нескольких пикселей. Изначально термин из стандарта ITU-T H.264, но также будет использоваться для обозначения суперблоков из стандарта Errata.
+
+Slice – сущность, объединяющая макроблоки.
+
+# Библиографический список
+
+1. Alliance for Open Media. AV1 Bitstream & Decoding Process Specification / Version 1.0.0 with Errata 1 [Электронный ресурс]: технический стандарт / консорциум Alliance for Open Media. – 2021. – URL: https://aomediacodec.github.io/av1-spec/av1-spec.pdf (дата обращения: 19.12.2025).
+2. Международный союз электросвязи. Сектор стандартизации (ITU-T). \*Рекомендация ITU-T H.264 (V15). Усовершенствованное кодирование изображений для общих аудиовизуальных услуг = Advanced video coding for generic audiovisual services\* [Электронный ресурс]. — изд. от 13.08.2024. — (Серия H: Аудиовизуальные и мультимедийные системы; инфраструктура аудиовизуальных услуг; кодирование движущегося видео). — URL: https://www.itu.int/rec/T-REC-H.264 (дата обращения: 19.12.2025).
+3. Chen Y. An Overview of Core Coding Tools in the AV1 Video Codec / Yue Chen, D. Murherjee, J. Han // IEEE 2018 Picture Coding Symposium (PCS). — P. 41-45 – 2018. — DOI: 10.1109/PCS.2018.8456249.
+4. Petreski D. Next Generation Video Compression Standards – Performance Overview / D. Petreski, T. Kartalov // IEEE International Conference on Systems, Signals and Image Processing (IWSSIP) — 2023. — P. 1–5. — DOI: 10.1109/IWSSIP58668.2023.10180261.
+5. Kolodziejski W. Speeding Up the AV1 Global Warped Motion Compensation / W. Kolodziejski, R. Domanski, L. Agostini // 2024 IEEE 15th Latin America Symposium on Circuits and Systems (LASCAS). — 2024. — P. 1-5. — DOI: 10.1109/LASCAS60203.2024.10506160.
+6. Yi Y. High-Speed CAVLC Encoder for 1080p 60-Hz H.264 Codec / Y. Yi, B. C. Song // IEEE Signal Processing Letters — vol. 15 — 2008. — P. 891–894. — DOI: 10.1109/LSP.2008.2001982.
+7. NATS JetStream vs RabbitMQ vs Apache Kafka on VPS in 2025: Throughput/Latency Benchmarks, Exactly‑Once vs At‑Least‑Once, Durability/Replication, TLS/mTLS, and the Best Message Broker for Your Stack / блог компании Onidel [Электронный ресурс]. 8.11.2025. URL: <https://onidel.com/blog/nats-jetstream-rabbitmq-kafka-2025-benchmarks> (дата обращения: 13.02.2026).
+8. Angular vs. React vs. Vue.js in 2025 / блог компании DLT Software [Электронный ресурс]. 20.11.2025. URL: https://medium.com/@dltsoft/angular-vs-react-vs-vue-js-in-2025-f24b56ff0064 (дата обращения: 13.02.2026).
+9. H.264 is Magic / Sid Bala [Электронный ресурс]. 2.11.2016. URL: https://sidbala.com/h-264-is-magic/ (дата обращения: 13.02.2026).
+10. Lin Y., Efficient AV1 Video Coding Using a Multi-layer Framework / Wei‑Ting Lin, Zoe Liu, Debargha Mukherjee // IEEE 2018 Data Compression Conference. — P. 368-369 – 2018. — DOI: 10.1109/DCC.2018.00045.
+11. SVT-AV1 documentation: ALTREF and Overlay Pictures [Электронный ресурс]. URL: https://gitlab.com/AOMediaCodec/SVT-AV1/-/blob/master/Docs/Appendix-Alt-Refs.md (дата обращения: 13.02.2026).
+12. Salonen N. A Comparative Study of Kafka and NATS : [дипломная работа] / N. Salonen. — Turku : University of Turku, 2025. — 62 c. — URL: https://www.utupub.fi/bitstream/handle/10024/182402/Salonen\_Nino\_opinnayte.pdf (дата обращения: 14.03.2026).
+13. Comparing NATS, NATS JetStream, and Kafka Performance for Varying Payload Sizes / Nathan B. Crocker [Электронный ресурс]. 24.09.2024. URL: https://medium.com/@nathanbcrocker/comparing-nats-nats-jetstream-and-kafka-performance-for-varying-payload-sizes-3538c94ac56c (дата обращения: 14.03.2026).
+14. Comparison of NATS, RabbitMQ, NSQ, and Kafka / блог компании Gcore [Электронный ресурс]. 20.06.2024. URL: https://gcore.com/learning/nats-rabbitmq-nsq-kafka-comparison (дата обращения: 14.03.2026).
+15. Python Flask vs FastAPI vs Django: Framework Comparison 2026 / блог [Электронный ресурс]. 07.02.2026. URL: https://dasroot.net/posts/2026/02/python-flask-fastapi-django-framework-comparison-2026/ (дата обращения: 14.03.2026).
+16. Using H.264 video compression in IP video surveillance systems / блог [Электронный ресурс]. 03.04.2009. URL: https://www.networkwebcams.co.uk/blog/h264-video-compression-in-ip-video-surveillance-systems/ (дата обращения: 23.03.2026).
+17. Международный союз электросвязи. Сектор стандартизации (ITU-T). \*Рекомендация ITU-T H.264 (V15). Усовершенствованное кодирование изображений для общих аудиовизуальных услуг = Advanced video coding for generic audiovisual services\* [Электронный ресурс]. — изд. от 13.08.2024. — (Серия H: Аудиовизуальные и мультимедийные системы; инфраструктура аудиовизуальных услуг; кодирование движущегося видео). — p. 126. — URL: https://www.itu.int/rec/T-REC-H.264 (дата обращения: 19.12.2025).
+18. Международный союз электросвязи. Сектор стандартизации (ITU-T). \*Рекомендация ITU-T H.264 (V15). Усовершенствованное кодирование изображений для общих аудиовизуальных услуг = Advanced video coding for generic audiovisual services\* [Электронный ресурс]. — изд. от 13.08.2024. — (Серия H: Аудиовизуальные и мультимедийные системы; инфраструктура аудиовизуальных услуг; кодирование движущегося видео). — p. 101. — URL: https://www.itu.int/rec/T-REC-H.264 (дата обращения: 19.12.2025).
+19. Prediction of Transformed (DCT) Video Coding Residual for Video Compression / статья [Электронный ресурс]. 04.2014. — p. 6 — URL: https://www.researchgate.net/publication/261700797\_Prediction\_of\_Transformed\_DCT\_Video\_Coding\_Residual\_for\_Video\_Compression (дата обращения: 23.03.2026).
+20. Ren J. Algorithmic Optimization for H.264 Deblocking Filter on Portable Devices / J. Ren, N. Kehtarnavaz // 2007 IEEE International Symposium on Consumer Electronics. — p. 1-6 – 2007. — DOI: 10.1109/ISCE.2007.4382168
+21. Han J. A Technical Overview of AV1 / J. Han, B. Li, D. Mukhergee // Proceedings of the IEEE. — vol. 109, no. 9, p. 1435-1462. — DOI: 10.1109/JPROC.2021.3058584
+22. Yi Y. High-Speed CAVLC Encoder for 1080p 60-Hz H.264 Codec / Y. Yi, B. Song // IEEE Signal Processing Letters. — vol. 15, p. 891-894, 2008. — DOI: 10.1109/LSP.2008.2001982
+23. Moroz L. Efficient Floating-Point Division for Digital Signal Processing Application [Tips & Tricks] / L. Moroz, V. Samotyy // IEEE Signal Processing Magazine. — vol. 36, no. 1 — P. 159-163 – 2019. — DOI: 10.1109/MSP.2018.2875977
+24. Time scale of system latencies / блог [Электронный ресурс]. 05.2014. — URL: https://perfsolutions.blogspot.com/2014/05/time-scale-of-system-latencies.html (дата обращения: 23.03.2026).
+25. AV1 benchmark / репозиторий [Электронный ресурс]. 23.03.2026. — URL: https://github.com/ressiwage/AV1-bench (дата обращения: 23.03.2026).
+26. 10. Measurement and Timing / курс MIT 6.172, видеолекции [Электронный ресурс]. 23.09.2019. URL: https://www.youtube.com/watch?v=LvX3g45ynu8&list=PLUl4u3cNGP63VIBQVWguXxZZi0566y7Wf&index=10 (дата обращения: 17.05.2026).
+27. 4. Measurement and Timing / курс MIT 6.172, видеолекции [Электронный ресурс]. 23.09.2019. URL: https://youtu.be/L1ung0wil9Y?si=Y7x0qU8wag98p\_iA&t=4032 (дата обращения: 17.05.2026).
+28. ДИАГРАММА прецедентов
+
+![](a0bf04aa.jpg)
+
+1. ДИАГРАММА последовательностей
+
+![](192aa8d2.jpg)
+
+1. упрощённая структура видеодекодера
+
+![](66f26c95.jpg)
+
+1. существующий бизнес-процесс
+
+![](9c0ebaa9.png)
+
+1. Техническое задание
+
+Техническое задания разработано на основе выполненного анализа по ГОСТ 19.201-78–2010 и загружено в SmartLMS отдельно как документ «РИС-22-2-Берсенёв\_ИИ\_ТЗ.docx».
