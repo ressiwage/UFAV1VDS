@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36" version="29.6.1">
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36">
   <diagram id="C5RBs43oDa-KdzZeNtuy" name="Page-1">
-    <mxGraphModel dx="946" dy="571" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1334" dy="1985" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="WIyWlLk6GJQsqaUBKTNV-0" />
         <mxCell id="WIyWlLk6GJQsqaUBKTNV-1" parent="WIyWlLk6GJQsqaUBKTNV-0" />
@@ -48,14 +48,40 @@
         <mxCell id="Qem3QTk17b9FJVRX5ZjL-8" parent="WIyWlLk6GJQsqaUBKTNV-1" style="rhombus;whiteSpace=wrap;html=1;" value="is there server with free&lt;div&gt;&amp;nbsp;ram available?&lt;/div&gt;" vertex="1">
           <mxGeometry height="70" width="210" x="530" y="290" as="geometry" />
         </mxCell>
+        <mxCell id="7k9RfaMxyUk8FVcnI5xt-5" edge="1" parent="WIyWlLk6GJQsqaUBKTNV-1" source="Qem3QTk17b9FJVRX5ZjL-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="7k9RfaMxyUk8FVcnI5xt-1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="760" y="575" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
         <mxCell id="Qem3QTk17b9FJVRX5ZjL-9" parent="WIyWlLk6GJQsqaUBKTNV-1" style="rounded=0;whiteSpace=wrap;html=1;" value="&lt;br&gt;&lt;span style=&quot;color: rgb(0, 0, 0); font-family: Helvetica; font-size: 11px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: center; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: nowrap; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; float: none; display: inline !important;&quot;&gt;choose server&amp;nbsp;&lt;/span&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(0, 0, 0); font-family: Helvetica; font-size: 11px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: center; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: nowrap; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; float: none; display: inline !important;&quot;&gt;with free ram&lt;/span&gt;&lt;br&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
           <mxGeometry height="60" width="120" x="700" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="7k9RfaMxyUk8FVcnI5xt-3" edge="1" parent="WIyWlLk6GJQsqaUBKTNV-1" source="Qem3QTk17b9FJVRX5ZjL-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="7k9RfaMxyUk8FVcnI5xt-1">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="Qem3QTk17b9FJVRX5ZjL-11" parent="WIyWlLk6GJQsqaUBKTNV-1" style="rounded=0;whiteSpace=wrap;html=1;" value="choose any server, upload video to s3" vertex="1">
           <mxGeometry height="60" width="120" x="460" y="440" as="geometry" />
         </mxCell>
+        <mxCell id="7k9RfaMxyUk8FVcnI5xt-2" edge="1" parent="WIyWlLk6GJQsqaUBKTNV-1" source="Qem3QTk17b9FJVRX5ZjL-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="7k9RfaMxyUk8FVcnI5xt-1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="240" y="575" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
         <mxCell id="Qem3QTk17b9FJVRX5ZjL-13" parent="WIyWlLk6GJQsqaUBKTNV-1" style="rounded=0;whiteSpace=wrap;html=1;" value="&lt;div&gt;put the request to queue&lt;/div&gt;" vertex="1">
           <mxGeometry height="60" width="120" x="180" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="7k9RfaMxyUk8FVcnI5xt-6" edge="1" parent="WIyWlLk6GJQsqaUBKTNV-1" source="7k9RfaMxyUk8FVcnI5xt-0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="WIyWlLk6GJQsqaUBKTNV-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="7k9RfaMxyUk8FVcnI5xt-0" parent="WIyWlLk6GJQsqaUBKTNV-1" style="ellipse;fillColor=strokeColor;html=1;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="435" y="-10" as="geometry" />
+        </mxCell>
+        <mxCell id="7k9RfaMxyUk8FVcnI5xt-1" parent="WIyWlLk6GJQsqaUBKTNV-1" style="ellipse;html=1;shape=endState;fillColor=strokeColor;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="505" y="560" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
